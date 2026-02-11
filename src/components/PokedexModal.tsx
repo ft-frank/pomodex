@@ -3,6 +3,8 @@ import { X, Search, Book, ArrowUp, ArrowDown, ChevronRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx } from 'clsx';
 import {pokemonMap} from '../constants/pokemonMap'
+import { List } from "react-window"
+
 
 interface PokedexModalProps {
   isOpen: boolean;
@@ -237,7 +239,7 @@ const BottomButton: React.FC<BottomButtonProps> = ({ setIndex, label, sub, color
             </div>
             </button>
 
-            <input className = "w-full h-16 md:h-20 bg-gradient-to-b border-b-4 border-r-4 rounded-2xl flex items-center px-3 md:px-4 gap-3 md:gap-4 active:translate-y-1 active:border-b-0 transition-all"
+            <input className = "w-full h-16 md:h-20 bg-white bg-opacity-10 border-b-4 border-r-4 rounded-2xl flex items-center px-3 md:px-4 gap-3 md:gap-4 active:translate-y-1 active:border-b-0 transition-all"
             
             type = "text" name = "searchValue" placeholder = "Search ID or Name Here"></input>
         </form>        
