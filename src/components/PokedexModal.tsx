@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Search, Book, ArrowUp, ArrowDown, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx } from 'clsx';
-import {pokemonMap} from '../constants/pokemonMap'
-import { List } from "react-window"
+import PokemonList from "./PokemonList"
+import { usePokemonFilter } from '../utils/usePokemonFilter'
+
 
 
 interface PokedexModalProps {
@@ -12,15 +13,33 @@ interface PokedexModalProps {
   caughtPokemon: number[];
 }
 
-// Gen 4 End is 493. We'll show a range.
-const TOTAL_POKEMON = 493;
+// React-Window
 
-const POKEMON_NAMES: Record<number, string> = pokemonMap
+// function Window({ names }: { names: string[] }) {
+//   return (
+//     <List
+//       rowComponent={RowComponent}
+//       rowCount={names.length}
+//       rowHeight={25}
+//       rowProps={{ names }}
+//     />
+//   );
+// }
+
+
+
+
+// Gen 4 End is 493. We'll show a range.
+
 
 export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, caughtPokemon }) => {
-  const [selectedIndex, setSelectedIndex] = useState(1); 
+  const [searchTerm, setSearchTerm] = useState(null) 
   const listRef = useRef<HTMLDivElement>(null);
+  const filteredPokemonIndices = usePokemonFilter(searchTerm);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  
 
+  
   // Scroll to selected item when it changes
   useEffect(() => {
     if (listRef.current) {
@@ -31,12 +50,29 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
     }
   }, [selectedIndex]);
 
+  useEffect(() => {
+  if (filteredPokemonIndices.length > 0) {
+    setSelectedIndex(filteredPokemonIndices[0]);
+  }
+}, [filteredPokemonIndices])
+
   const setIndex = function(index: number) {
     setSelectedIndex(index)
   }
 
-  const handlePrev = () => setSelectedIndex(prev => Math.max(0, prev - 1));
-  const handleNext = () => setSelectedIndex(prev => Math.min(TOTAL_POKEMON - 1, prev + 1));
+  const handleNext = () => {  const currentPosition = filteredPokemonIndices.indexOf(selectedIndex);
+    if (currentPosition < filteredPokemonIndices.length - 1) {
+      setSelectedIndex(filteredPokemonIndices[currentPosition + 1]);
+    }
+    
+  }
+
+  const handlePrev = () => { const currentPosition = filteredPokemonIndices.indexOf(selectedIndex);
+    if (currentPosition > 0) {
+      setSelectedIndex(filteredPokemonIndices[currentPosition - 1]);
+    }
+    
+  }
 
   // Mock seen count (caught + some random "seen" ones)
     const seenCount = caughtPokemon.length //change later
@@ -75,7 +111,7 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
                     <div className="absolute inset-0 border-4 border-yellow-200/50 rounded-xl pointer-events-none" />
                     <div className="relative w-full h-full flex items-center justify-center">
                       <img 
-                            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-iv/diamond-pearl/${selectedIndex + 1}.png`} 
+                            src={`sprites/${selectedIndex + 1}.png`} 
                             alt="Pokemon"
                             className="w-full h-full object-contain"
                             style={{ imageRendering: 'pixelated' }}
@@ -90,44 +126,7 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
                 </div>
 
                 {/* Right: List Area */}
-                <div className="w-full md:w-1/2 bg-[#C0C0B8] border-2 border-[#A0A098] rounded-xl overflow-hidden flex flex-col min-h-64 md:min-h-0">
-                  <div 
-                    ref={listRef}
-                    className="flex-1 overflow-y-auto scrollbar-hide py-2"
-                  >
-                    {Array.from({ length: TOTAL_POKEMON }).map((_, i) => {
-                      const id = i + 1;
-                      const isCaught = caughtPokemon.includes(id);
-                      const isSelected = selectedIndex === i;
-                      
-                      return (
-                        <div 
-                          key={id}
-                          onClick={() => setSelectedIndex(i)}
-                          className={clsx(
-                            "relative flex items-center h-10 px-4 cursor-pointer transition-colors",
-                            isSelected ? "bg-white text-[#303030]" : "text-[#606058] hover:bg-white/30"
-                          )}
-                        >
-                          {isSelected && (
-                            <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 bg-red-500 rotate-45" />
-                          )}
-                          <div className="flex items-center gap-3 w-full">
-                            {isCaught ? (
-                              <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" className="w-5 h-5" alt="" />
-                            ) : (
-                              <div className="w-5 h-5 rounded-full bg-black/10" />
-                            )}
-                            <span className="text-xl font-bold w-12">{id.toString().padStart(3, '0')}</span>
-                            <span className="text-xl uppercase tracking-tighter truncate">
-                              {isCaught ? (POKEMON_NAMES[id]): isSelected ? ` POKEMON ${id}` : "------"}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                <PokemonList caughtPokemon = {caughtPokemon} selectedIndex = {selectedIndex} setSelectedIndex= {setSelectedIndex} filteredIndices = {filteredPokemonIndices}/>
               </div>
 
               {/* Stats Bar */}
@@ -159,6 +158,8 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
               <div className="w-1/2 p-4 md:p-6 flex flex-col justify-center gap-3 md:gap-4 z-10">
                 <BottomButton 
                   setIndex = {setIndex}
+                  indices = {filteredPokemonIndices}
+                  setSearchTerm = {setSearchTerm}
                   label="SEARCH" 
                   sub="POKÉMON" 
                   color="green" 
@@ -196,13 +197,16 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
 
 interface BottomButtonProps {
   setIndex: Function;
+  indices: number[];
+  setSearchTerm: Function;
   label: string;
   sub: string;
   color: 'green' | 'teal' | 'lightGreen';
   icon: React.ReactNode;
+
 }
 
-const BottomButton: React.FC<BottomButtonProps> = ({ setIndex, label, sub, color, icon }) => {
+const BottomButton: React.FC<BottomButtonProps> = ({ setIndex, indices, setSearchTerm, label, sub, color, icon }) => {
   
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -210,9 +214,13 @@ const BottomButton: React.FC<BottomButtonProps> = ({ setIndex, label, sub, color
         const formData = new FormData(e.currentTarget);
         const searchValue = formData.get('searchValue') as string;
         
-        if (searchValue) {
+        if (typeof searchValue == "number") {
             const numValue = Number(searchValue);
             setIndex(numValue - 1);
+        }
+        else if (typeof searchValue == "string") {
+          setSearchTerm(searchValue)
+    
         }
     };
 
