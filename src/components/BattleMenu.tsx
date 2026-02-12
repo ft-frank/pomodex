@@ -23,7 +23,7 @@ export const BattleMenu: React.FC<BattleMenuProps> = ({
 }) => {
   return (
     <div className="w-full max-w-2xl bg-[#E8E8E8] border-4 border-[#303030] rounded-tl-3xl rounded-tr-3xl p-4 shadow-2xl overflow-hidden font-['VT323']">
-      <div className="flex flex-col md:flex-row gap-4 h-full">
+      <div className="flex flex-row gap-4 h-full">
         {/* Message Area */}
         <div className="flex-1 bg-white border-4 border-[#505050] rounded-xl p-4 flex flex-col justify-center relative min-h-[120px]">
           <p className="text-[#303030] text-2xl uppercase tracking-wider">
@@ -37,7 +37,7 @@ export const BattleMenu: React.FC<BattleMenuProps> = ({
         </div>
 
         {/* Buttons Grid */}
-        <div className="grid grid-cols-2 gap-2 w-full md:w-72">
+        <div className="grid grid-cols-2 gap-2 w-72 shrink-0">
           <BattleButton 
             onClick={onToggle} 
             variant="fight" 

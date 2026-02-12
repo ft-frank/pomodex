@@ -37,9 +37,8 @@ export default function BattleScreen() {
 
   // Mark current pokemon as seen whenever it changes
   useEffect(() => {
-    markSeen(currentPokemonId).then(() => {
-      setSeenPokemon(prev => prev.includes(currentPokemonId) ? prev : [...prev, currentPokemonId]);
-    });
+    setSeenPokemon(prev => prev.includes(currentPokemonId) ? prev : [...prev, currentPokemonId]);
+    markSeen(currentPokemonId);
   }, [currentPokemonId]);
 
   // Update time left when minutes change and timer is not active
@@ -148,7 +147,7 @@ export default function BattleScreen() {
               initial={{ x: 100, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               key={currentPokemonId}
-              className="absolute top-12 right-12 bg-white/95 border-4 border-[#333] rounded-bl-3xl p-4 w-64 shadow-lg font-['VT323']"
+              className="absolute top-24 right-12 bg-white/95 border-4 border-[#333] rounded-bl-3xl p-4 w-64 shadow-lg font-['VT323']"
             >
               <div className="flex justify-between items-center border-b-2 border-gray-300 pb-1 mb-2">
                 <span className="text-2xl uppercase tracking-tighter font-bold">{pokemonName}</span>
