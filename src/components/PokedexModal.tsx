@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { clsx } from 'clsx';
 import PokemonList from "./PokemonList"
 import { usePokemonFilter } from '../utils/usePokemonFilter'
+import {Link} from 'react-router-dom'
 
 
 
@@ -142,13 +143,16 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
                   <span className="text-xs md:text-sm opacity-80">OBTAINED</span>
                   <span className="text-2xl md:text-3xl font-bold">{caughtPokemon.length}</span>
                 </div>
-                <button 
-                  onClick={onClose}
-                  className="flex items-center gap-2 bg-black/20 px-3 md:px-4 py-2 rounded-lg hover:bg-black/40 transition-colors"
-                >
-                  <div className="w-5 h-5 md:w-6 md:h-6 border-2 border-white rounded-full flex items-center justify-center text-xs">B</div>
-                  <span className="text-lg md:text-xl">QUIT</span>
-                </button>
+                <Link to = "/">
+                    <button 
+                      onClick={onClose}
+                      className="flex items-center gap-2 bg-black/20 px-3 md:px-4 py-2 rounded-lg hover:bg-black/40 transition-colors"
+                    >
+                      
+                      {/* <div className="w-5 h-5 md:w-6 md:h-6 border-2 border-white rounded-full flex items-center justify-center text-xs">B</div> */}
+                      <span className="text-lg md:text-xl">QUIT</span>
+                    </button>
+                </Link>
               </div>
             </div>
 

@@ -6,6 +6,7 @@ import { BagModal } from './BagModal';
 import { toast, Toaster } from 'sonner';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'motion/react';
+import {Link} from 'react-router-dom'
 
 // Pokemon names mapping for the message box
 const POKEMON_NAMES: Record<number, string> = {
@@ -17,7 +18,7 @@ const POKEMON_NAMES: Record<number, string> = {
 
 const DEFAULT_POKEMON_IDS = [1, 4, 7, 25, 133, 152, 155, 158, 252, 255, 258, 387, 390, 393];
 
-export default function App() {
+export default function BattleScreen() {
   const [minutes, setMinutes] = useState(25);
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isActive, setIsActive] = useState(false);
@@ -117,13 +118,14 @@ export default function App() {
         
         {/* Top Header Icons */}
         <div className="absolute top-6 left-6 z-30 flex gap-2">
-          <button 
-            onClick={() => setIsPokedexOpen(true)}
-            className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl border border-white/20 text-white transition-all active:scale-95 group"
-          >
-            <BookOpen size={24} />
-            <span className="absolute left-full ml-2 px-2 py-1 bg-black/80 text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">POKÉDEX</span>
-          </button>
+          <Link to = "/pokedex">
+            <button 
+              className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl border border-white/20 text-white transition-all active:scale-95 group"
+            >
+              <BookOpen size={24} />
+              <span className="absolute left-full ml-2 px-2 py-1 bg-black/80 text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">POKÉDEX</span>
+            </button>
+          </Link>
         </div>
 
         <div className="absolute top-6 right-6 z-30">
