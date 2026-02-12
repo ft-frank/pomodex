@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, forwardRef } from 'react'; // REMOVED: useMemo (no longer needed)
+import React, { useState, useRef, useEffect, forwardRef } from 'react';
 import { X, Search, Book, ArrowUp, ArrowDown, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx } from 'clsx';
@@ -10,20 +10,20 @@ interface PokemonListProps {
   caughtPokemon: number[];
   selectedIndex: number;
   setSelectedIndex: Function;
-  filteredIndices: number[]; // CHANGED: Use this instead of searchTerm
+  filteredIndices: number[];
 }
 const PokemonList = forwardRef<HTMLDivElement, PokemonListProps>(
-  ({ caughtPokemon, selectedIndex, setSelectedIndex, filteredIndices }, listRef) => { // CHANGED: Destructure filteredIndices instead of searchTerm
+  ({ caughtPokemon, selectedIndex, setSelectedIndex, filteredIndices }, listRef) => {
     const POKEMON_NAMES: Record<number, string> = pokemonMap;
 
 
     return (
-      <div className="w-full md:w-1/2 bg-[#C0C0B8] border-2 border-[#A0A098] rounded-xl overflow-hidden flex flex-col min-h-64 md:min-h-0">
+      // CHANGED: Mobile uses h-32 (~3 items), desktop uses w-1/5 (20% width)
+      <div className="w-full md:w-1/4 h-32 md:h-auto bg-[#C0C0B8] border-2 border-[#A0A098] rounded-xl overflow-hidden flex flex-col md:min-h-96">
         <div
           ref={listRef}
           className="flex-1 overflow-y-auto scrollbar-hide py-2"
         >
-          {/* CHANGED: Use filteredIndices prop */}
           {filteredIndices.map((i) => {
             const id = i + 1;
             const isCaught = caughtPokemon.includes(id);
@@ -34,7 +34,7 @@ const PokemonList = forwardRef<HTMLDivElement, PokemonListProps>(
                 key={id}
                 onClick={() => setSelectedIndex(i)}
                 className={clsx(
-                  "relative flex items-center h-10 px-4 cursor-pointer transition-colors",
+                  "relative flex items-center h-10 px-4 cursor-pointer transition-colors whitespace-nowrap",
                   isSelected
                     ? "bg-white text-[#303030]"
                     : "text-[#606058] hover:bg-white/30"

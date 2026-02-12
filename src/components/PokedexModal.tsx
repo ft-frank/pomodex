@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { X, Search, Book, ArrowUp, ArrowDown, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx } from 'clsx';
@@ -37,7 +37,7 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
   const listRef = useRef<HTMLDivElement>(null);
   const filteredPokemonIndices = usePokemonFilter(searchTerm);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  
+  const [empty, changeEmpty] = useState(false);
 
   
   // Scroll to selected item when it changes
@@ -53,7 +53,9 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
   useEffect(() => {
   if (filteredPokemonIndices.length > 0) {
     setSelectedIndex(filteredPokemonIndices[0]);
+    changeEmpty(false)
   }
+  else{changeEmpty(true)}
 }, [filteredPokemonIndices])
 
   const setIndex = function(index: number) {
@@ -106,22 +108,23 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
               {/* Main Display Area */}
               <div className="flex-1 flex flex-col md:flex-row p-4 gap-4 overflow-hidden min-h-0">
                 {/* Left: Sprite Display */}
-                <div className="w-full md:w-1/2 flex flex-col gap-4 min-h-0">
+                <div className="w-full flex flex-col gap-4 min-h-0">
                   <div className="w-full h-full max-h-96 md:max-h-none bg-white border-4 border-[#A0A098] rounded-2xl p-4 flex items-center justify-center relative shadow-inner">
                     <div className="absolute inset-0 border-4 border-yellow-200/50 rounded-xl pointer-events-none" />
                     <div className="relative w-full h-full flex items-center justify-center">
-                      <img 
-                            src={`sprites/${selectedIndex + 1}.png`} 
-                            alt="Pokemon"
-                            className="w-full h-full object-contain"
-                            style={{ imageRendering: 'pixelated' }}
+                      {!empty && caughtPokemon.includes(selectedIndex + 1) ? (
+                        <img 
+                          src={`sprites/${selectedIndex + 1}.png`} 
+                          alt="Pokemon"
+                          className="w-full h-full object-contain"
+                          style={{ imageRendering: 'pixelated' }}
                         />
-                      {!caughtPokemon.includes(selectedIndex + 1) && (
+                      ) : (
                         <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
                           <span className="text-4xl text-black/20">?</span>
                         </div>
                       )}
-                    </div>
+                  </div>
                   </div>
                 </div>
 
@@ -158,7 +161,6 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
               <div className="w-1/2 p-4 md:p-6 flex flex-col justify-center gap-3 md:gap-4 z-10">
                 <BottomButton 
                   setIndex = {setIndex}
-                  indices = {filteredPokemonIndices}
                   setSearchTerm = {setSearchTerm}
                   label="SEARCH" 
                   sub="POKÉMON" 
@@ -197,7 +199,6 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
 
 interface BottomButtonProps {
   setIndex: Function;
-  indices: number[];
   setSearchTerm: Function;
   label: string;
   sub: string;
@@ -206,53 +207,68 @@ interface BottomButtonProps {
 
 }
 
-const BottomButton: React.FC<BottomButtonProps> = ({ setIndex, indices, setSearchTerm, label, sub, color, icon }) => {
-  
-
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        const searchValue = formData.get('searchValue') as string;
-        
-        if (typeof searchValue == "number") {
-            const numValue = Number(searchValue);
-            setIndex(numValue - 1);
-        }
-        else if (typeof searchValue == "string") {
-          setSearchTerm(searchValue)
-    
-        }
-    };
-
-
-  const colors = {
+const BottomButton: React.FC<BottomButtonProps> = ({ 
+  setIndex, 
+  setSearchTerm, 
+  label, 
+  sub, 
+  color, 
+  icon 
+}) => {
+  // Memoize colors object to prevent recreation on every render
+  const colors = useMemo(() => ({
     green: "from-[#80C860] to-[#60A840] border-[#406030]",
     teal: "from-[#60C0C0] to-[#40A0A0] border-[#305050]",
     lightGreen: "from-[#A0D860] to-[#80B840] border-[#507030]",
-  };
+  }), []);
+
+  // Memoize the button classes
+  const buttonClasses = useMemo(
+    () => clsx(
+      "w-full h-16 md:h-20 bg-gradient-to-b border-b-4 border-r-4 rounded-2xl flex items-center px-3 md:px-4 gap-3 md:gap-4 active:translate-y-1 active:border-b-0 transition-all",
+      colors[color]
+    ),
+    [color, colors]
+  );
+
+  // Optimize the submit handler
+  const handleSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const searchValue = formData.get('searchValue') as string;
+    
+    // FIX: Check if it's a valid number string first
+    const numValue = Number(searchValue);
+    if (!isNaN(numValue) && searchValue.trim() !== '') {
+      setIndex(numValue - 1);
+    } else {
+      setSearchTerm(searchValue);
+    }
+  }, [setIndex, setSearchTerm]);
 
   return (
-    <>
-        <form onSubmit = {handleSubmit}>
-            <button type = "submit"  className={clsx(
-            "w-full h-16 md:h-20 bg-gradient-to-b border-b-4 border-r-4 rounded-2xl flex items-center px-3 md:px-4 gap-3 md:gap-4 active:translate-y-1 active:border-b-0 transition-all",
-            colors[color]
-            )}>
-            <div className="flex-1 text-left min-w-0">
-                <div className="text-lg md:text-2xl font-bold text-white tracking-tighter leading-tight truncate">{label}</div>
-                <div className="text-base md:text-xl font-bold text-white/80 tracking-tighter leading-tight truncate">{sub}</div>
-            </div>
-            <div className="bg-white/20 p-1.5 md:p-2 rounded-full text-white flex-shrink-0">
-                {icon}
-            </div>
-            </button>
+    <form onSubmit={handleSubmit}>
+      <button type="submit" className={buttonClasses}>
+        <div className="flex-1 text-left min-w-0">
+          <div className="text-lg md:text-2xl font-bold text-white tracking-tighter leading-tight truncate">
+            {label}
+          </div>
+          <div className="text-base md:text-xl font-bold text-white/80 tracking-tighter leading-tight truncate">
+            {sub}
+          </div>
+        </div>
+        <div className="bg-white/20 p-1.5 md:p-2 rounded-full text-white flex-shrink-0">
+          {icon}
+        </div>
+      </button>
 
-            <input className = "w-full h-16 md:h-20 bg-white bg-opacity-10 border-b-4 border-r-4 rounded-2xl flex items-center px-3 md:px-4 gap-3 md:gap-4 active:translate-y-1 active:border-b-0 transition-all"
-            
-            type = "text" name = "searchValue" placeholder = "Search ID or Name Here"></input>
-        </form>        
-      
-    </>
+      <input 
+        className="w-full h-16 md:h-20 bg-white bg-opacity-10 border-b-4 border-r-4 rounded-2xl flex items-center px-3 md:px-4 gap-3 md:gap-4 active:translate-y-1 active:border-b-0 transition-all"
+        type="text" 
+        name="searchValue" 
+        placeholder="Search ID or Name Here"
+      />
+    </form>
   );
 };
 
