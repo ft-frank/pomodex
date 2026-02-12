@@ -7,8 +7,8 @@ interface PokemonSpriteProps {
 }
 
 export const PokemonSprite: React.FC<PokemonSpriteProps> = ({ id, isCatching }) => {
-  // Using Gen 4 Diamond/Pearl sprites from PokeAPI
-  const spriteUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-iv/diamond-pearl/${id}.png`;
+  // Using downloaded sprites
+  const spriteUrl = `/sprites/${id}.png`;
 
   return (
     <div className="relative flex items-center justify-center w-64 h-64">
@@ -19,6 +19,7 @@ export const PokemonSprite: React.FC<PokemonSpriteProps> = ({ id, isCatching }) 
       </div>
       
       <motion.div
+        key={id}
         animate={isCatching ? {
           scale: [1, 1.2, 0],
           y: [0, -50, 0],
@@ -53,7 +54,7 @@ export const PokemonSprite: React.FC<PokemonSpriteProps> = ({ id, isCatching }) 
           className="absolute z-20"
         >
           <img 
-            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" 
+            src="src/assets/imgs/poke-ball.png"
             alt="Pokeball" 
             className="w-12 h-12"
             style={{ imageRendering: 'pixelated' }}

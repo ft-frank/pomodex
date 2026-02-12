@@ -3,20 +3,16 @@ import { Settings, BookOpen } from 'lucide-react';
 import { PokemonSprite } from './PokemonSprite';
 import { BattleMenu } from './BattleMenu';
 import { BagModal } from './BagModal';
+import {PokedexModal} from './PokedexModal.tsx'
 import { toast, Toaster } from 'sonner';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'motion/react';
-import {Link} from 'react-router-dom'
+import {pokemonMap} from '../constants/pokemonMap.tsx'
+import { loadCollection, markSeen, markCaught } from '../supabase/pokemonService'
 
 // Pokemon names mapping for the message box
-const POKEMON_NAMES: Record<number, string> = {
-  1: "Bulbasaur", 4: "Charmander", 7: "Squirtle", 25: "Pikachu", 133: "Eevee",
-  152: "Chikorita", 155: "Cyndaquil", 158: "Totodile", 252: "Treecko",
-  255: "Torchic", 258: "Mudkip", 387: "Turtwig", 390: "Chimchar", 393: "Piplup",
-  443: "Gible", 448: "Lucario", 483: "Dialga", 484: "Palkia", 487: "Giratina", 493: "Arceus"
-};
+const POKEMON_NAMES: Record<number, string> = pokemonMap
 
-const DEFAULT_POKEMON_IDS = [1, 4, 7, 25, 133, 152, 155, 158, 252, 255, 258, 387, 390, 393];
 
 export default function BattleScreen() {
   const [minutes, setMinutes] = useState(25);
@@ -25,22 +21,26 @@ export default function BattleScreen() {
   const [isCatching, setIsCatching] = useState(false);
   const [currentPokemonId, setCurrentPokemonId] = useState(387); // Turtwig as default (DP starter)
   const [caughtPokemon, setCaughtPokemon] = useState<number[]>([]);
+  const [seenPokemon, setSeenPokemon] = useState<number[]>([]);
 
   // Modal states
   const [isBagOpen, setIsBagOpen] = useState(false);
   const [isPokedexOpen, setIsPokedexOpen] = useState(false);
 
-  // Initialize caught pokemon from local storage
+  // Load collection from Supabase on mount
   useEffect(() => {
-    const saved = localStorage.getItem('caughtPokemon');
-    if (saved) {
-      try {
-        setCaughtPokemon(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to parse caught pokemon", e);
-      }
-    }
+    loadCollection().then(({ caught, seen }) => {
+      setCaughtPokemon(caught);
+      setSeenPokemon(seen);
+    });
   }, []);
+
+  // Mark current pokemon as seen whenever it changes
+  useEffect(() => {
+    markSeen(currentPokemonId).then(() => {
+      setSeenPokemon(prev => prev.includes(currentPokemonId) ? prev : [...prev, currentPokemonId]);
+    });
+  }, [currentPokemonId]);
 
   // Update time left when minutes change and timer is not active
   useEffect(() => {
@@ -55,10 +55,8 @@ export default function BattleScreen() {
     
     // Play catch sequence
     setTimeout(() => {
-      setCaughtPokemon(prev => {
-        const next = [...new Set([...prev, currentPokemonId])];
-        localStorage.setItem('caughtPokemon', JSON.stringify(next));
-        return next;
+      markCaught(currentPokemonId).then(() => {
+        setCaughtPokemon(prev => prev.includes(currentPokemonId) ? prev : [...prev, currentPokemonId]);
       });
       toast.success(`Gotcha! ${POKEMON_NAMES[currentPokemonId] || 'The Pokemon'} was caught!`, {
         description: "Check your Pokédex to see your collection.",
@@ -68,7 +66,7 @@ export default function BattleScreen() {
       // Reset to next random pokemon after a delay
       setTimeout(() => {
         setIsCatching(false);
-        const nextId = DEFAULT_POKEMON_IDS[Math.floor(Math.random() * DEFAULT_POKEMON_IDS.length)];
+        const nextId = Math.floor(Math.random() * 493) + 1;
         setCurrentPokemonId(nextId);
         setTimeLeft(minutes * 60);
       }, 2000);
@@ -102,7 +100,7 @@ export default function BattleScreen() {
   };
 
   const handleRandomizePokemon = () => {
-    const nextId = DEFAULT_POKEMON_IDS[Math.floor(Math.random() * DEFAULT_POKEMON_IDS.length)];
+    const nextId = Math.floor(Math.random() * 493) + 1;
     setCurrentPokemonId(nextId);
     toast("A new wild Pokemon appeared!");
   };
@@ -110,22 +108,21 @@ export default function BattleScreen() {
   const pokemonName = POKEMON_NAMES[currentPokemonId] || "Wild Pokemon";
 
   return (
-    <div className="min-h-screen bg-[#303030] flex items-center justify-center p-0 md:p-8 font-mono overflow-hidden">
+    <div className="h-screen w-screen bg-[#303030] flex items-center justify-center p-0 font-mono overflow-hidden">
       <Toaster position="top-center" richColors />
       
-      {/* Game Boy / DS Screen Wrapper */}
-      <div className="relative w-full max-w-4xl aspect-[4/3] bg-black border-[12px] border-[#444444] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col">
+      {/* Game Boy / DS Screen Wrapper - REMOVE bg-black */}
+      <div className="relative w-full h-full max-w-full border-0 md:border-[12px] md:border-[#444444] md:rounded-[2rem] shadow-2xl overflow-hidden flex flex-col">
         
         {/* Top Header Icons */}
         <div className="absolute top-6 left-6 z-30 flex gap-2">
-          <Link to = "/pokedex">
-            <button 
-              className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl border border-white/20 text-white transition-all active:scale-95 group"
-            >
-              <BookOpen size={24} />
-              <span className="absolute left-full ml-2 px-2 py-1 bg-black/80 text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">POKÉDEX</span>
-            </button>
-          </Link>
+          <button 
+            onClick={() => setIsPokedexOpen(true)}
+            className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl border border-white/20 text-white transition-all active:scale-95 group"
+          >
+            <BookOpen size={24} />
+            <span className="absolute left-full ml-2 px-2 py-1 bg-black/80 text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">POKÉDEX</span>
+          </button>
         </div>
 
         <div className="absolute top-6 right-6 z-30">
@@ -137,8 +134,8 @@ export default function BattleScreen() {
           </button>
         </div>
 
-        {/* Game World Background */}
-        <div className="relative flex-1 bg-cover bg-center overflow-hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1743361657693-7b60363b6d16?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwaXhlbCUyMGFydCUyMGxhbmRzY2FwZSUyMGx1c2glMjBoaWxscyUyMGdyZWVuJTIwcG9rZW1vbiUyMGJhdHRsZSUyMGJhY2tncm91bmR8ZW58MXx8fHwxNzcwNzI3MjcyfDA&ixlib=rb-4.1.0&q=80&w=1080)' }}>
+        {/* Game World Background - NOW FILLS ENTIRE SCREEN */}
+        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1743361657693-7b60363b6d16?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwaXhlbCUyMGFydCUyMGxhbmRzY2FwZSUyMGx1c2glMjBoaWxscyUyMGdyZWVuJTIwcG9rZW1vbiUyMGJhdHRsZSUyMGJhY2tncm91bmR8ZW58MXx8fHwxNzcwNzI3MjcyfDA&ixlib=rb-4.1.0&q=80&w=1080)' }}>
           {/* Sky Gradient for realism */}
           <div className="absolute inset-0 bg-gradient-to-b from-blue-400/20 to-transparent" />
           
@@ -146,7 +143,7 @@ export default function BattleScreen() {
           <div className="absolute inset-0 flex flex-col items-center justify-center pb-24">
             <PokemonSprite id={currentPokemonId} isCatching={isCatching} />
             
-            {/* Pokemon Info HUD (Top Right style like games) */}
+            {/* Pokemon Info HUD */}
             <motion.div 
               initial={{ x: 100, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
@@ -174,22 +171,18 @@ export default function BattleScreen() {
         </div>
 
         {/* UI Controls Area */}
-        <div className="relative z-20 flex justify-center -mt-16 pb-8 px-4">
-          <BattleMenu 
-            timerDisplay={formatTime(timeLeft)}
-            isActive={isActive}
-            onToggle={() => setIsActive(!isActive)}
-            onReset={handleReset}
-            onOpenBag={() => setIsBagOpen(true)}
-            onOpenPokemon={handleRandomizePokemon}
-            pokemonName={pokemonName}
-          />
-        </div>
-
-        {/* Decorative elements to mimic hardware */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-4 opacity-20">
-          <div className="w-12 h-1 bg-white/50 rounded-full" />
-          <div className="w-12 h-1 bg-white/50 rounded-full" />
+        <div className="relative z-20 flex justify-center items-end pb-8 px-4 h-full pointer-events-none">
+          <div className="pointer-events-auto">
+            <BattleMenu 
+              timerDisplay={formatTime(timeLeft)}
+              isActive={isActive}
+              onToggle={() => setIsActive(!isActive)}
+              onReset={handleReset}
+              onOpenBag={() => setIsBagOpen(true)}
+              onOpenPokemon={handleRandomizePokemon}
+              pokemonName={pokemonName}
+            />
+          </div>
         </div>
       </div>
 
@@ -200,7 +193,13 @@ export default function BattleScreen() {
         minutes={minutes}
         onSetMinutes={setMinutes}
       />
-      
+
+      <PokedexModal
+        isOpen={isPokedexOpen}
+        onClose={() => setIsPokedexOpen(false)}
+        caughtPokemon={caughtPokemon}
+        seenPokemon={seenPokemon}
+      />
     </div>
   );
 }

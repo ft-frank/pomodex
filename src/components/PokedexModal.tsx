@@ -12,6 +12,7 @@ interface PokedexModalProps {
   isOpen: boolean;
   onClose: () => void;
   caughtPokemon: number[];
+  seenPokemon: number[];
 }
 
 // React-Window
@@ -33,7 +34,7 @@ interface PokedexModalProps {
 // Gen 4 End is 493. We'll show a range.
 
 
-export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, caughtPokemon }) => {
+export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, caughtPokemon, seenPokemon }) => {
   const [searchTerm, setSearchTerm] = useState(null) 
   const listRef = useRef<HTMLDivElement>(null);
   const filteredPokemonIndices = usePokemonFilter(searchTerm);
@@ -78,7 +79,7 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
   }
 
   // Mock seen count (caught + some random "seen" ones)
-    const seenCount = caughtPokemon.length //change later
+    const seenCount = seenPokemon.length
 
   return (
     <AnimatePresence>
@@ -114,11 +115,18 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
                     <div className="absolute inset-0 border-4 border-yellow-200/50 rounded-xl pointer-events-none" />
                     <div className="relative w-full h-full flex items-center justify-center">
                       {!empty && caughtPokemon.includes(selectedIndex + 1) ? (
-                        <img 
-                          src={`sprites/${selectedIndex + 1}.png`} 
+                        <img
+                          src={`/sprites/${selectedIndex + 1}.png`}
                           alt="Pokemon"
                           className="w-full h-full object-contain"
                           style={{ imageRendering: 'pixelated' }}
+                        />
+                      ) : !empty && seenPokemon.includes(selectedIndex + 1) ? (
+                        <img
+                          src={`/sprites/${selectedIndex + 1}.png`}
+                          alt="Pokemon"
+                          className="w-full h-full object-contain"
+                          style={{ imageRendering: 'pixelated', filter: 'brightness(0)' }}
                         />
                       ) : (
                         <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
@@ -143,7 +151,7 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
                   <span className="text-xs md:text-sm opacity-80">OBTAINED</span>
                   <span className="text-2xl md:text-3xl font-bold">{caughtPokemon.length}</span>
                 </div>
-                <Link to = "/">
+      
                     <button 
                       onClick={onClose}
                       className="flex items-center gap-2 bg-black/20 px-3 md:px-4 py-2 rounded-lg hover:bg-black/40 transition-colors"
@@ -152,7 +160,7 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
                       {/* <div className="w-5 h-5 md:w-6 md:h-6 border-2 border-white rounded-full flex items-center justify-center text-xs">B</div> */}
                       <span className="text-lg md:text-xl">QUIT</span>
                     </button>
-                </Link>
+        
               </div>
             </div>
 
