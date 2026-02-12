@@ -19,9 +19,10 @@ export default function BattleScreen() {
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isActive, setIsActive] = useState(false);
   const [isCatching, setIsCatching] = useState(false);
-  const [currentPokemonId, setCurrentPokemonId] = useState(387); // Turtwig as default (DP starter)
+  const [currentPokemonId, setCurrentPokemonId] = useState(() => Math.floor(Math.random() * 493) + 1);
   const [caughtPokemon, setCaughtPokemon] = useState<number[]>([]);
   const [seenPokemon, setSeenPokemon] = useState<number[]>([]);
+  const [catchFailed, setCatchFailed] = useState(false);
 
   // Modal states
   const [isBagOpen, setIsBagOpen] = useState(false);
@@ -51,24 +52,38 @@ export default function BattleScreen() {
   const handleFinish = useCallback(() => {
     setIsActive(false);
     setIsCatching(true);
-    
-    // Play catch sequence
+
+    // Determine catch chance based on how much HP was drained
+    const catchChance = Math.min(minutes * 2.2 + 7.8, 95) / 100;
+    const caught = Math.random() < catchChance;
+
     setTimeout(() => {
-      markCaught(currentPokemonId).then(() => {
-        setCaughtPokemon(prev => prev.includes(currentPokemonId) ? prev : [...prev, currentPokemonId]);
-      });
-      toast.success(`Gotcha! ${POKEMON_NAMES[currentPokemonId] || 'The Pokemon'} was caught!`, {
-        description: "Check your Pokédex to see your collection.",
-        duration: 5000,
-      });
-      
-      // Reset to next random pokemon after a delay
-      setTimeout(() => {
-        setIsCatching(false);
-        const nextId = Math.floor(Math.random() * 493) + 1;
-        setCurrentPokemonId(nextId);
-        setTimeLeft(minutes * 60);
-      }, 2000);
+      if (caught) {
+        markCaught(currentPokemonId).then(() => {
+          setCaughtPokemon(prev => prev.includes(currentPokemonId) ? prev : [...prev, currentPokemonId]);
+        });
+        toast.success(`Gotcha! ${POKEMON_NAMES[currentPokemonId] || 'The Pokemon'} was caught!`, {
+          description: "Check your Pokédex to see your collection.",
+          duration: 5000,
+        });
+        setTimeout(() => {
+          setIsCatching(false);
+          const nextId = Math.floor(Math.random() * 493) + 1;
+          setCurrentPokemonId(nextId);
+          setTimeLeft(minutes * 60);
+        }, 2000);
+      } else {
+        setCatchFailed(true);
+        toast.error(`${POKEMON_NAMES[currentPokemonId] || 'The Pokemon'} broke free!`, {
+          description: "Try a longer session next time.",
+          duration: 4000,
+        });
+        setTimeout(() => {
+          setIsCatching(false);
+          setCatchFailed(false);
+          setTimeLeft(minutes * 60);
+        }, 2200);
+      }
     }, 1500);
   }, [currentPokemonId, minutes]);
 
@@ -84,7 +99,8 @@ export default function BattleScreen() {
     return () => clearInterval(interval);
   }, [isActive, timeLeft, handleFinish]);
 
-  const hpPercentage = (timeLeft / (minutes * 60)) * 100;
+  const drainPercent = Math.min(minutes * 2.2 + 7.8, 95);
+  const hpPercentage = (100 - drainPercent) + (timeLeft / (minutes * 60)) * drainPercent;
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -140,7 +156,7 @@ export default function BattleScreen() {
           
           {/* Sprite Area */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pb-24">
-            <PokemonSprite id={currentPokemonId} isCatching={isCatching} />
+            <PokemonSprite id={currentPokemonId} isCatching={isCatching} catchFailed={catchFailed} />
             
             {/* Pokemon Info HUD */}
             <motion.div 

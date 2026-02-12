@@ -1,12 +1,14 @@
 import React from 'react';
 import { motion } from 'motion/react';
+import pokeballImg from '../assets/imgs/poke-ball.png';
 
 interface PokemonSpriteProps {
   id: number;
   isCatching?: boolean;
+  catchFailed?: boolean;
 }
 
-export const PokemonSprite: React.FC<PokemonSpriteProps> = ({ id, isCatching }) => {
+export const PokemonSprite: React.FC<PokemonSpriteProps> = ({ id, isCatching, catchFailed }) => {
   // Using downloaded sprites
   const spriteUrl = `/sprites/${id}.png`;
 
@@ -20,17 +22,25 @@ export const PokemonSprite: React.FC<PokemonSpriteProps> = ({ id, isCatching }) 
       
       <motion.div
         key={id}
-        animate={isCatching ? {
+        animate={isCatching && !catchFailed ? {
           scale: [1, 1.2, 0],
           y: [0, -50, 0],
           rotate: [0, 360, 720],
           opacity: [1, 1, 0]
+        } : catchFailed ? {
+          scale: 1,
+          y: 0,
+          rotate: 0,
+          opacity: 1,
         } : {
           y: [0, -8, 0],
         }}
-        transition={isCatching ? {
+        transition={isCatching && !catchFailed ? {
           duration: 1,
           ease: "easeInOut"
+        } : catchFailed ? {
+          duration: 0.5,
+          delay: 1.2,
         } : {
           duration: 2,
           repeat: Infinity,
@@ -49,13 +59,25 @@ export const PokemonSprite: React.FC<PokemonSpriteProps> = ({ id, isCatching }) 
       {isCatching && (
         <motion.div
           initial={{ scale: 0, y: 100 }}
-          animate={{ scale: [0, 1.2, 1], y: [100, -20, 0] }}
-          transition={{ duration: 0.5, delay: 0.8 }}
+          animate={catchFailed ? {
+            rotate: [-20, 20, -15, 15, -10, 10, 0],
+            scale: [1, 1, 1, 1, 1, 1, 1.5, 0],
+            opacity: [1, 1, 1, 1, 1, 1, 1, 0],
+          } : {
+            scale: [0, 1.2, 1],
+            y: [100, -20, 0],
+          }}
+          transition={catchFailed ? {
+            duration: 1.5,
+          } : {
+            duration: 0.5,
+            delay: 0.8,
+          }}
           className="absolute z-20"
         >
-          <img 
-            src="src/assets/imgs/poke-ball.png"
-            alt="Pokeball" 
+          <img
+            src={pokeballImg}
+            alt="Pokeball"
             className="w-12 h-12"
             style={{ imageRendering: 'pixelated' }}
           />
