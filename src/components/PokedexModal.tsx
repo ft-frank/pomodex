@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback, startTransition } from 'react';
 import { X, Search, Book, ArrowUp, ArrowDown, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx } from 'clsx';
@@ -84,15 +84,15 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md font-['VT323']">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md font-['VT323']">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
-            className="flex flex-col gap-2 w-full h-full"
+            className="flex flex-col gap-1 sm:gap-2 w-full h-full"
           >
             {/* MAIN DISPLAY SCREEN */}
-            <div className="flex-1 bg-[#D8D8D0] border-8 border-[#303030] rounded-xl overflow-hidden flex flex-col relative shadow-2xl min-h-0">
+            <div className="flex-1 bg-[#D8D8D0] border-4 sm:border-8 border-[#303030] rounded-xl overflow-hidden flex flex-col relative shadow-2xl min-h-0">
               {/* Header Bar */}
               <div className="h-10 bg-[#808080] border-b-4 border-black/20 flex items-center px-4 justify-between">
                 <div className="flex items-center gap-2">
@@ -108,12 +108,12 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
               </div>
 
               {/* Main Display Area */}
-              <div className="flex-1 flex flex-col md:flex-row p-4 gap-4 overflow-hidden min-h-0">
+              <div className="flex-1 flex flex-col md:flex-row p-2 sm:p-4 gap-2 sm:gap-4 overflow-hidden min-h-0">
                 {/* Left: Sprite Display */}
-                <div className="w-full flex flex-col gap-4 min-h-0">
-                  <div className="w-full h-full max-h-96 md:max-h-none bg-white border-4 border-[#A0A098] rounded-2xl p-4 flex items-center justify-center relative shadow-inner">
+                <div className="w-full flex flex-col gap-2 sm:gap-4 min-h-0">
+                  <div className="w-full min-h-32 sm:min-h-48 md:min-h-0 h-full max-h-60 sm:max-h-96 md:max-h-none bg-white border-4 border-[#A0A098] rounded-2xl p-2 sm:p-4 flex items-center justify-center relative shadow-inner">
                     <div className="absolute inset-0 border-4 border-yellow-200/50 rounded-xl pointer-events-none" />
-                    <div className="relative w-full h-full flex items-center justify-center">
+                    <div className="relative w-full h-full flex items-center justify-center min-h-24 sm:min-h-40">
                       {!empty && caughtPokemon.includes(selectedIndex + 1) ? (
                         <img
                           src={`/sprites/${selectedIndex + 1}.png`}
@@ -129,7 +129,7 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
                           style={{ imageRendering: 'pixelated', filter: 'brightness(0)' }}
                         />
                       ) : (
-                        <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
+                        <div className="w-full h-full bg-black/10 flex items-center justify-center rounded-lg">
                           <span className="text-4xl text-black/20">?</span>
                         </div>
                       )}
@@ -165,7 +165,7 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
             </div>
 
             {/* CONTROLS SCREEN */}
-            <div className="h-64 bg-[#B0B0A8] border-8 border-[#303030] rounded-xl overflow-hidden flex relative shadow-2xl">
+            <div className="h-48 sm:h-64 bg-[#B0B0A8] border-4 sm:border-8 border-[#303030] rounded-xl overflow-hidden flex relative shadow-2xl">
               {/* Background pattern */}
               <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 0)', backgroundSize: '20px 20px' }} />
               
@@ -183,14 +183,14 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
               </div>
 
               {/* Center: Scroll Controls */}
-              <div className="flex flex-col items-center justify-center gap-6 md:gap-8 z-10">
+              <div className="flex flex-col items-center justify-center gap-3 sm:gap-6 md:gap-8 z-10">
                 <ScrollButton onClick={handlePrev} direction="up" />
                 <ScrollButton onClick={handleNext} direction="down" />
               </div>
 
               {/* Right Side: Pokeball Graphic */}
-              <div className="flex-1 flex items-center justify-center p-2 md:p-4 relative">
-                <div className="relative w-32 h-32 md:w-48 md:h-48 lg:w-56 lg:h-56">
+              <div className="flex-1 flex items-center justify-center p-1 sm:p-2 md:p-4 relative">
+                <div className="relative w-24 h-24 sm:w-32 sm:h-32 md:w-48 md:h-48 lg:w-56 lg:h-56">
                   {/* The Large Pokeball */}
                   <div className="absolute inset-0 rounded-full border-4 md:border-8 border-[#303030] overflow-hidden bg-white shadow-2xl">
                     <div className="h-1/2 bg-[#F04040]" />
@@ -237,7 +237,7 @@ const BottomButton: React.FC<BottomButtonProps> = ({
   // Memoize the button classes
   const buttonClasses = useMemo(
     () => clsx(
-      "w-full h-16 md:h-20 bg-gradient-to-b border-b-4 border-r-4 rounded-2xl flex items-center px-3 md:px-4 gap-3 md:gap-4 active:translate-y-1 active:border-b-0 transition-all",
+      "w-full h-12 sm:h-16 md:h-20 bg-gradient-to-b border-b-4 border-r-4 rounded-2xl flex items-center px-3 md:px-4 gap-2 sm:gap-3 md:gap-4 active:translate-y-1 active:border-b-0 transition-all",
       colors[color]
     ),
     [color, colors]
@@ -248,13 +248,13 @@ const BottomButton: React.FC<BottomButtonProps> = ({
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const searchValue = formData.get('searchValue') as string;
-    
+
     // FIX: Check if it's a valid number string first
     const numValue = Number(searchValue);
     if (!isNaN(numValue) && searchValue.trim() !== '') {
-      setIndex(numValue - 1);
+      startTransition(() => setIndex(numValue - 1));
     } else {
-      setSearchTerm(searchValue);
+      startTransition(() => setSearchTerm(searchValue));
     }
   }, [setIndex, setSearchTerm]);
 
@@ -274,8 +274,8 @@ const BottomButton: React.FC<BottomButtonProps> = ({
         </div>
       </button>
 
-      <input 
-        className="w-full h-16 md:h-20 bg-white bg-opacity-10 border-b-4 border-r-4 rounded-2xl flex items-center px-3 md:px-4 gap-3 md:gap-4 active:translate-y-1 active:border-b-0 transition-all"
+      <input
+        className="w-full h-10 sm:h-16 md:h-20 bg-white bg-opacity-10 border-b-4 border-r-4 rounded-2xl flex items-center px-3 md:px-4 gap-2 sm:gap-3 md:gap-4 active:translate-y-1 active:border-b-0 transition-all text-sm sm:text-base"
         type="text" 
         name="searchValue" 
         placeholder="Search ID or Name Here"
@@ -287,10 +287,10 @@ const BottomButton: React.FC<BottomButtonProps> = ({
 const ScrollButton: React.FC<{ onClick: () => void; direction: 'up' | 'down' }> = ({ onClick, direction }) => (
   <button 
     onClick={onClick}
-    className="w-12 h-12 md:w-16 md:h-16 bg-[#D8D0] border-4 border-[#303030] rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform"
+    className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 bg-[#D8D0] border-4 border-[#303030] rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform"
   >
-    <div className="w-9 h-9 md:w-12 md:h-12 border-2 border-[#303030] rounded-full flex items-center justify-center">
-      {direction === 'up' ? <ArrowUp size={20} className="md:w-6 md:h-6" /> : <ArrowDown size={20} className="md:w-6 md:h-6" />}
+    <div className="w-7 h-7 sm:w-9 sm:h-9 md:w-12 md:h-12 border-2 border-[#303030] rounded-full flex items-center justify-center">
+      {direction === 'up' ? <ArrowUp size={16} className="sm:w-5 sm:h-5 md:w-6 md:h-6" /> : <ArrowDown size={16} className="sm:w-5 sm:h-5 md:w-6 md:h-6" />}
     </div>
   </button>
 );

@@ -130,21 +130,21 @@ export default function BattleScreen() {
       <div className="relative w-full h-full max-w-full border-0 md:border-[12px] md:border-[#444444] md:rounded-[2rem] shadow-2xl overflow-hidden flex flex-col">
         
         {/* Top Header Icons */}
-        <div className="absolute top-6 left-6 z-30 flex gap-2">
-          <button 
+        <div className="absolute top-3 left-3 sm:top-6 sm:left-6 z-30 flex gap-2">
+          <button
             onClick={() => setIsPokedexOpen(true)}
-            className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl border border-white/20 text-white transition-all active:scale-95 group"
+            className="p-2 sm:p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl border border-white/20 text-white transition-all active:scale-95 group"
           >
-            <BookOpen size={24} />
+            <BookOpen size={20} className="sm:w-6 sm:h-6" />
             <span className="absolute left-full ml-2 px-2 py-1 bg-black/80 text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">POKÉDEX</span>
           </button>
         </div>
 
-        <div className="absolute top-6 right-6 z-30">
-          <button 
-            className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl border border-white/20 text-white transition-all active:scale-95 group"
+        <div className="absolute top-3 right-3 sm:top-6 sm:right-6 z-30">
+          <button
+            className="p-2 sm:p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl border border-white/20 text-white transition-all active:scale-95 group"
           >
-            <Settings size={24} />
+            <Settings size={20} className="sm:w-6 sm:h-6" />
             <span className="absolute right-full mr-2 px-2 py-1 bg-black/80 text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">SETTINGS</span>
           </button>
         </div>
@@ -163,7 +163,7 @@ export default function BattleScreen() {
               initial={{ x: 100, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               key={currentPokemonId}
-              className="absolute top-24 right-12 bg-white/95 border-4 border-[#333] rounded-bl-3xl p-4 w-64 shadow-lg font-['VT323']"
+              className="absolute top-16 right-4 sm:top-24 sm:right-12 bg-white/95 border-4 border-[#333] rounded-bl-3xl p-3 sm:p-4 w-48 sm:w-64 shadow-lg font-['VT323']"
             >
               <div className="flex justify-between items-center border-b-2 border-gray-300 pb-1 mb-2">
                 <span className="text-2xl uppercase tracking-tighter font-bold">{pokemonName}</span>
