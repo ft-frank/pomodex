@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { clsx } from 'clsx';
 import PokemonList from "./PokemonList"
 import { usePokemonFilter } from '../utils/usePokemonFilter'
-import {Link} from 'react-router-dom'
 
 
 
@@ -14,21 +13,6 @@ interface PokedexModalProps {
   caughtPokemon: number[];
   seenPokemon: number[];
 }
-
-// React-Window
-
-// function Window({ names }: { names: string[] }) {
-//   return (
-//     <List
-//       rowComponent={RowComponent}
-//       rowCount={names.length}
-//       rowHeight={25}
-//       rowProps={{ names }}
-//     />
-//   );
-// }
-
-
 
 
 // Gen 4 End is 493. We'll show a range.

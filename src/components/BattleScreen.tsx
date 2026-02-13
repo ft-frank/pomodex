@@ -1,14 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Settings, BookOpen } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Settings, BookOpen, LogOut } from 'lucide-react';
+import { supabase } from '../supabase/supabase';
 import { PokemonSprite } from './PokemonSprite';
 import { BattleMenu } from './BattleMenu';
 import { BagModal } from './BagModal';
 import {PokedexModal} from './PokedexModal.tsx'
 import { toast, Toaster } from 'sonner';
 import { clsx } from 'clsx';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import {pokemonMap} from '../constants/pokemonMap.tsx'
 import { loadCollection, markSeen, markCaught } from '../supabase/pokemonService'
+import { getRandomPokemon } from '../constants/pokemonRarity'
 
 // Pokemon names mapping for the message box
 const POKEMON_NAMES: Record<number, string> = pokemonMap
@@ -19,7 +21,7 @@ export default function BattleScreen() {
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isActive, setIsActive] = useState(false);
   const [isCatching, setIsCatching] = useState(false);
-  const [currentPokemonId, setCurrentPokemonId] = useState(() => Math.floor(Math.random() * 493) + 1);
+  const [currentPokemonId, setCurrentPokemonId] = useState(() => getRandomPokemon());
   const [caughtPokemon, setCaughtPokemon] = useState<number[]>([]);
   const [seenPokemon, setSeenPokemon] = useState<number[]>([]);
   const [catchFailed, setCatchFailed] = useState(false);
@@ -27,6 +29,7 @@ export default function BattleScreen() {
   // Modal states
   const [isBagOpen, setIsBagOpen] = useState(false);
   const [isPokedexOpen, setIsPokedexOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Load collection from Supabase on mount
   useEffect(() => {
@@ -68,7 +71,7 @@ export default function BattleScreen() {
         });
         setTimeout(() => {
           setIsCatching(false);
-          const nextId = Math.floor(Math.random() * 493) + 1;
+          const nextId = getRandomPokemon();
           setCurrentPokemonId(nextId);
           setTimeLeft(minutes * 60);
         }, 2000);
@@ -115,9 +118,24 @@ export default function BattleScreen() {
   };
 
   const handleRandomizePokemon = () => {
-    const nextId = Math.floor(Math.random() * 493) + 1;
+    const today = new Date().toDateString();
+    const stored = localStorage.getItem('rerollDate');
+    let count = stored === today ? Number(localStorage.getItem('rerollCount') || 0) : 0;
+
+    if (count >= 5) {
+      toast.error("No rerolls left today!", {
+        description: "You can find 5 new Pokemon per day. Try again tomorrow.",
+      });
+      return;
+    }
+
+    count++;
+    localStorage.setItem('rerollDate', today);
+    localStorage.setItem('rerollCount', String(count));
+
+    const nextId = getRandomPokemon();
     setCurrentPokemonId(nextId);
-    toast("A new wild Pokemon appeared!");
+    toast(`A new wild Pokemon appeared! (${5 - count} rerolls left)`);
   };
 
   const pokemonName = POKEMON_NAMES[currentPokemonId] || "Wild Pokemon";
@@ -142,11 +160,25 @@ export default function BattleScreen() {
 
         <div className="absolute top-3 right-3 sm:top-6 sm:right-6 z-30">
           <button
-            className="p-2 sm:p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl border border-white/20 text-white transition-all active:scale-95 group"
+            onClick={() => setIsSettingsOpen(prev => !prev)}
+            className="p-2 sm:p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl border border-white/20 text-white transition-all active:scale-95"
           >
             <Settings size={20} className="sm:w-6 sm:h-6" />
-            <span className="absolute right-full mr-2 px-2 py-1 bg-black/80 text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">SETTINGS</span>
           </button>
+          {isSettingsOpen && (
+            <div className="absolute right-0 mt-2 w-40 bg-[#303030]/95 backdrop-blur-md border border-white/20 rounded-xl overflow-hidden shadow-2xl font-['VT323']">
+              <button
+                onClick={() => {
+                  supabase.auth.signOut();
+                  setIsSettingsOpen(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-white hover:bg-white/10 transition-colors text-lg"
+              >
+                <LogOut size={18} />
+                LOG OUT
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Game World Background - NOW FILLS ENTIRE SCREEN */}
@@ -202,6 +234,8 @@ export default function BattleScreen() {
       </div>
 
       {/* Modals */}
+                          
+
       <BagModal 
         isOpen={isBagOpen} 
         onClose={() => setIsBagOpen(false)}

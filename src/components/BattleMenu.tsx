@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, RotateCcw, Backpack, Squirrel, LogOut } from 'lucide-react';
+import { Play, Pause, Backpack, Squirrel, LogOut } from 'lucide-react';
 import { clsx } from 'clsx';
 
 interface BattleMenuProps {
