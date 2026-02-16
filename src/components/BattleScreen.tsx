@@ -59,35 +59,45 @@ export default function BattleScreen() {
     // Determine catch chance based on how much HP was drained
     const catchChance = Math.min(minutes * 2.2 + 7.8, 95) / 100;
     const caught = Math.random() < catchChance;
+    const pokemonName = POKEMON_NAMES[currentPokemonId] || 'The Pokemon';
 
-    setTimeout(() => {
-      if (caught) {
-        markCaught(currentPokemonId).then(() => {
-          setCaughtPokemon(prev => prev.includes(currentPokemonId) ? prev : [...prev, currentPokemonId]);
-        });
-        toast.success(`Gotcha! ${POKEMON_NAMES[currentPokemonId] || 'The Pokemon'} was caught!`, {
-          description: "Check your Pokédex to see your collection.",
-          duration: 5000,
-        });
-        setTimeout(() => {
-          setIsCatching(false);
-          const nextId = getRandomPokemon();
-          setCurrentPokemonId(nextId);
-          setTimeLeft(minutes * 60);
-        }, 2000);
-      } else {
-        setCatchFailed(true);
-        toast.error(`${POKEMON_NAMES[currentPokemonId] || 'The Pokemon'} broke free!`, {
-          description: "Try a longer session next time.",
-          duration: 4000,
-        });
-        setTimeout(() => {
-          setIsCatching(false);
-          setCatchFailed(false);
-          setTimeLeft(minutes * 60);
-        }, 2200);
-      }
-    }, 1500);
+    // Show a permanent toast prompting user to click to reveal result
+    const revealToastId = toast('Timer complete! The Pokéball is shaking...', {
+      description: 'Click here to see if you caught it!',
+      duration: Infinity,
+      action: {
+        label: 'Reveal',
+        onClick: () => {
+          toast.dismiss(revealToastId);
+          if (caught) {
+            markCaught(currentPokemonId).then(() => {
+              setCaughtPokemon(prev => prev.includes(currentPokemonId) ? prev : [...prev, currentPokemonId]);
+            });
+            toast.success(`Gotcha! ${pokemonName} was caught!`, {
+              description: "Check your Pokédex to see your collection.",
+              duration: 5000,
+            });
+            setTimeout(() => {
+              setIsCatching(false);
+              const nextId = getRandomPokemon();
+              setCurrentPokemonId(nextId);
+              setTimeLeft(minutes * 60);
+            }, 2000);
+          } else {
+            setCatchFailed(true);
+            toast.error(`${pokemonName} broke free!`, {
+              description: "Try a longer session next time.",
+              duration: 4000,
+            });
+            setTimeout(() => {
+              setIsCatching(false);
+              setCatchFailed(false);
+              setTimeLeft(minutes * 60);
+            }, 2200);
+          }
+        },
+      },
+    });
   }, [currentPokemonId, minutes]);
 
   useEffect(() => {

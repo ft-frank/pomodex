@@ -42,7 +42,7 @@ export const BagModal: React.FC<BagModalProps> = ({ isOpen, onClose, minutes, on
 
               <div className="flex items-center gap-6">
                 <button 
-                  onClick={() => onSetMinutes(Math.max(1, minutes - 5))}
+                  onClick={() => onSetMinutes(Math.max(5, minutes - 5))}
                   className="w-12 h-12 bg-white border-2 border-[#303030] rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
                 >
                   <Minus size={20} />
