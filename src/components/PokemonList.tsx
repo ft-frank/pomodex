@@ -5,11 +5,12 @@ import pokeballImg from '../assets/imgs/poke-ball.png'
 
 const POKEMON_NAMES: Record<number, string> = pokemonMap;
 
-const PokemonRow = React.memo(({ index, isCaught, isSelected, onSelect }: {
+const PokemonRow = React.memo(({ index, isCaught, isSelected, onSelect, caughtCount }: {
   index: number;
   isCaught: boolean;
   isSelected: boolean;
   onSelect: (i: number) => void;
+  caughtCount: number;
 }) => {
   const id = index + 1;
   const handleClick = useCallback(() => onSelect(index), [index, onSelect]);
@@ -43,13 +44,16 @@ const PokemonRow = React.memo(({ index, isCaught, isSelected, onSelect }: {
           {id.toString().padStart(3, "0")}
         </span>
 
-        <span className="text-xl uppercase tracking-tighter truncate">
+        <span className="text-xl uppercase tracking-tighter truncate flex-1">
           {isCaught
             ? POKEMON_NAMES[id]
             : isSelected
             ? `POKEMON ${id}`
             : "------"}
         </span>
+        {isCaught && (
+          <span className="text-lg text-[#606058] ml-auto">Lv.{caughtCount}</span>
+        )}
       </div>
     </div>
   );
@@ -60,10 +64,11 @@ interface PokemonListProps {
   selectedIndex: number;
   setSelectedIndex: (i: number) => void;
   filteredIndices: number[];
+  caughtCounts: Record<number, number>;
 }
 
 const PokemonList = forwardRef<HTMLDivElement, PokemonListProps>(
-  ({ caughtPokemon, selectedIndex, setSelectedIndex, filteredIndices }, listRef) => {
+  ({ caughtPokemon, selectedIndex, setSelectedIndex, filteredIndices, caughtCounts}, listRef) => {
     const handleSelect = useCallback((i: number) => {
       setSelectedIndex(i);
     }, [setSelectedIndex]);
@@ -81,6 +86,7 @@ const PokemonList = forwardRef<HTMLDivElement, PokemonListProps>(
               isCaught={caughtPokemon.includes(i + 1)}
               isSelected={selectedIndex === i}
               onSelect={handleSelect}
+              caughtCount={caughtCounts[i + 1] ?? 0}
             />
           ))}
         </div>

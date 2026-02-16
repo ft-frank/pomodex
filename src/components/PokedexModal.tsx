@@ -12,20 +12,43 @@ interface PokedexModalProps {
   onClose: () => void;
   caughtPokemon: number[];
   seenPokemon: number[];
+  caughtCounts: Record<number, number>;
 }
 
 
 // Gen 4 End is 493. We'll show a range.
 
 
-export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, caughtPokemon, seenPokemon }) => {
+export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, caughtPokemon, seenPokemon, caughtCounts }) => {
   const [searchTerm, setSearchTerm] = useState(null) 
   const listRef = useRef<HTMLDivElement>(null);
   const filteredPokemonIndices = usePokemonFilter(searchTerm);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [empty, changeEmpty] = useState(false);
+  const [filterMode, setFilterMode] = useState<'all' | 'seen' | 'obtained'>('all');
 
-  
+  const displayedIndices = useMemo(() => {
+    if (filterMode === 'all') return filteredPokemonIndices;
+    if (filterMode === 'seen') return filteredPokemonIndices.filter(i => seenPokemon.includes(i + 1));
+    return filteredPokemonIndices.filter(i => caughtPokemon.includes(i + 1));
+  }, [filterMode, filteredPokemonIndices, seenPokemon, caughtPokemon]);
+
+  const cycleFilter = () => {
+    setFilterMode(prev => prev === 'all' ? 'seen' : prev === 'seen' ? 'obtained' : 'all');
+  };
+
+  // Close on B or Escape key
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   // Scroll to selected item when it changes
   useEffect(() => {
     if (listRef.current) {
@@ -37,32 +60,32 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
   }, [selectedIndex]);
 
   useEffect(() => {
-  if (filteredPokemonIndices.length > 0) {
-    setSelectedIndex(filteredPokemonIndices[0]);
+  if (displayedIndices.length > 0) {
+    setSelectedIndex(displayedIndices[0]);
     changeEmpty(false)
   }
   else{changeEmpty(true)}
-}, [filteredPokemonIndices])
+}, [displayedIndices])
 
   const setIndex = function(index: number) {
     setSelectedIndex(index)
   }
 
-  const handleNext = () => {  const currentPosition = filteredPokemonIndices.indexOf(selectedIndex);
-    if (currentPosition < filteredPokemonIndices.length - 1) {
-      setSelectedIndex(filteredPokemonIndices[currentPosition + 1]);
+  const handleNext = () => {  const currentPosition = displayedIndices.indexOf(selectedIndex);
+    if (currentPosition < displayedIndices.length - 1) {
+      setSelectedIndex(displayedIndices[currentPosition + 1]);
     }
-    
+
   }
 
-  const handlePrev = () => { const currentPosition = filteredPokemonIndices.indexOf(selectedIndex);
+  const handlePrev = () => { const currentPosition = displayedIndices.indexOf(selectedIndex);
     if (currentPosition > 0) {
-      setSelectedIndex(filteredPokemonIndices[currentPosition - 1]);
+      setSelectedIndex(displayedIndices[currentPosition - 1]);
     }
-    
+
   }
 
-  // Mock seen count (caught + some random "seen" ones)
+  
     const seenCount = seenPokemon.length
 
   return (
@@ -99,12 +122,17 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
                     <div className="absolute inset-0 border-4 border-yellow-200/50 rounded-xl pointer-events-none" />
                     <div className="relative w-full h-full flex items-center justify-center min-h-24 sm:min-h-40">
                       {!empty && caughtPokemon.includes(selectedIndex + 1) ? (
+                        <>
                         <img
                           src={`/sprites/${selectedIndex + 1}.png`}
                           alt="Pokemon"
                           className="w-full h-full object-contain"
                           style={{ imageRendering: 'pixelated' }}
                         />
+                        <span className="absolute bottom-2 right-2 text-xl sm:text-2xl font-bold text-[#303030] bg-yellow-300/80 px-2 py-0.5 rounded-lg border-2 border-[#303030]">
+                          Lv.{caughtCounts[selectedIndex + 1] ?? 1}
+                        </span>
+                        </>
                       ) : !empty && seenPokemon.includes(selectedIndex + 1) ? (
                         <img
                           src={`/sprites/${selectedIndex + 1}.png`}
@@ -122,7 +150,7 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
                 </div>
 
                 {/* Right: List Area */}
-                <PokemonList caughtPokemon = {caughtPokemon} selectedIndex = {selectedIndex} setSelectedIndex= {setSelectedIndex} filteredIndices = {filteredPokemonIndices}/>
+                <PokemonList caughtPokemon = {caughtPokemon} selectedIndex = {selectedIndex} setSelectedIndex= {setSelectedIndex} filteredIndices = {displayedIndices} caughtCounts={caughtCounts}/>
               </div>
 
               {/* Stats Bar */}
@@ -135,13 +163,20 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
                   <span className="text-xs md:text-sm opacity-80">OBTAINED</span>
                   <span className="text-2xl md:text-3xl font-bold">{caughtPokemon.length}</span>
                 </div>
-      
+                    
+                    <button
+                      onClick={cycleFilter}
+                      className="flex items-center justify-center gap-2 bg-black/20 w-40 md:w-48 px-3 md:px-4 py-2 rounded-lg hover:bg-black/40 transition-colors"
+                    >
+                      <span className="text-lg md:text-xl">Filter: {filterMode === 'all' ? 'All' : filterMode === 'seen' ? 'Seen' : 'Obtained'}</span>
+                    </button>
+
                     <button 
                       onClick={onClose}
                       className="flex items-center gap-2 bg-black/20 px-3 md:px-4 py-2 rounded-lg hover:bg-black/40 transition-colors"
                     >
                       
-                      {/* <div className="w-5 h-5 md:w-6 md:h-6 border-2 border-white rounded-full flex items-center justify-center text-xs">B</div> */}
+
                       <span className="text-lg md:text-xl">QUIT</span>
                     </button>
         
@@ -221,7 +256,7 @@ const BottomButton: React.FC<BottomButtonProps> = ({
   // Memoize the button classes
   const buttonClasses = useMemo(
     () => clsx(
-      "w-full h-12 sm:h-16 md:h-20 bg-gradient-to-b border-b-4 border-r-4 rounded-2xl flex items-center px-3 md:px-4 gap-2 sm:gap-3 md:gap-4 active:translate-y-1 active:border-b-0 transition-all",
+      "w-full h-12 sm:h-16 md:h-20 bg-gradient-to-b border-b-4 border-r-4 rounded-2xl flex items-center px-3 md:px-4 gap-2 sm:gap-3 md:gap-4 active:translate-y-1 active:border-b-0 hover:brightness-90 transition-all",
       colors[color]
     ),
     [color, colors]
@@ -259,7 +294,7 @@ const BottomButton: React.FC<BottomButtonProps> = ({
       </button>
 
       <input
-        className="w-full h-10 sm:h-16 md:h-20 bg-white bg-opacity-10 border-b-4 border-r-4 rounded-2xl flex items-center px-3 md:px-4 gap-2 sm:gap-3 md:gap-4 active:translate-y-1 active:border-b-0 transition-all text-sm sm:text-base"
+        className="w-full h-10 sm:h-16 md:h-20 bg-white bg-opacity-10 border-b-4 border-r-4 rounded-2xl flex items-center px-3 md:px-4 gap-2 sm:gap-3 md:gap-4 active:translate-y-1 active:border-b-0 transition-all text-sm sm:text-base hover:brightness-90"
         type="text" 
         name="searchValue" 
         placeholder="Search ID or Name Here"
@@ -271,7 +306,7 @@ const BottomButton: React.FC<BottomButtonProps> = ({
 const ScrollButton: React.FC<{ onClick: () => void; direction: 'up' | 'down' }> = ({ onClick, direction }) => (
   <button 
     onClick={onClick}
-    className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 bg-[#D8D0] border-4 border-[#303030] rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform"
+    className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 bg-[#D8D0] border-4 border-[#303030] rounded-full flex items-center justify-center shadow-lg active:scale-95 hover:bg-black/20 transition-all"
   >
     <div className="w-7 h-7 sm:w-9 sm:h-9 md:w-12 md:h-12 border-2 border-[#303030] rounded-full flex items-center justify-center">
       {direction === 'up' ? <ArrowUp size={16} className="sm:w-5 sm:h-5 md:w-6 md:h-6" /> : <ArrowDown size={16} className="sm:w-5 sm:h-5 md:w-6 md:h-6" />}

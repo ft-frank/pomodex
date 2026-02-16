@@ -5,6 +5,7 @@ import { PokemonSprite } from './PokemonSprite';
 import { BattleMenu } from './BattleMenu';
 import { BagModal } from './BagModal';
 import {PokedexModal} from './PokedexModal.tsx'
+import {StatsModal} from './StatsModal.tsx'
 import { toast, Toaster } from 'sonner';
 import { clsx } from 'clsx';
 import { motion } from 'motion/react';
@@ -17,27 +18,41 @@ const POKEMON_NAMES: Record<number, string> = pokemonMap
 
 
 export default function BattleScreen() {
-  const [minutes, setMinutes] = useState(25);
-  const [timeLeft, setTimeLeft] = useState(25 * 60);
+  const [minutes, setMinutes] = useState(() => {
+  const saved = localStorage.getItem('pomodex-minutes');
+  return saved ? Number(saved) : 25;});
+  const [timeLeft, setTimeLeft] = useState(() => {
+    const saved = localStorage.getItem('pomodex-minutes');
+    return (saved ? Number(saved) : 25) * 60;
+  });
   const [isActive, setIsActive] = useState(false);
   const [isCatching, setIsCatching] = useState(false);
   const [currentPokemonId, setCurrentPokemonId] = useState(() => getRandomPokemon());
   const [caughtPokemon, setCaughtPokemon] = useState<number[]>([]);
   const [seenPokemon, setSeenPokemon] = useState<number[]>([]);
   const [catchFailed, setCatchFailed] = useState(false);
+  const [caughtCounts, setCaughtCounts] = useState<Record<number, number>>({});
 
   // Modal states
   const [isBagOpen, setIsBagOpen] = useState(false);
   const [isPokedexOpen, setIsPokedexOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isStatsopen, setIsStatsOpen] = useState(false)
 
   // Load collection from Supabase on mount
   useEffect(() => {
-    loadCollection().then(({ caught, seen }) => {
+    loadCollection().then(({ caught, seen, caughtCounts: counts }) => {
       setCaughtPokemon(caught);
       setSeenPokemon(seen);
+      setCaughtCounts(counts);
     });
   }, []);
+
+
+  // Saving changes to timer
+  useEffect(() => {
+  localStorage.setItem('pomodex-minutes', String(minutes));
+}, [minutes]);
 
   // Mark current pokemon as seen whenever it changes
   useEffect(() => {
@@ -72,6 +87,7 @@ export default function BattleScreen() {
           if (caught) {
             markCaught(currentPokemonId).then(() => {
               setCaughtPokemon(prev => prev.includes(currentPokemonId) ? prev : [...prev, currentPokemonId]);
+              setCaughtCounts(prev => ({ ...prev, [currentPokemonId]: (prev[currentPokemonId] ?? 0) + 1 }));
             });
             toast.success(`Gotcha! ${pokemonName} was caught!`, {
               description: "Check your Pokédex to see your collection.",
@@ -168,6 +184,11 @@ export default function BattleScreen() {
           </button>
         </div>
 
+        <button 
+            onClick={() => setIsStatsOpen(true)}
+            className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl border border-white/20 text-white transition-all active:scale-95 group"
+          ></button>
+
         <div className="absolute top-3 right-3 sm:top-6 sm:right-6 z-30">
           <button
             onClick={() => setIsSettingsOpen(prev => !prev)}
@@ -258,7 +279,20 @@ export default function BattleScreen() {
         onClose={() => setIsPokedexOpen(false)}
         caughtPokemon={caughtPokemon}
         seenPokemon={seenPokemon}
+        caughtCounts={caughtCounts}
       />
+
+      {/* <StatsModal
+        isOpen = {isStatsOpen}
+        onClose = {() => setIsStatsOpen(false)}
+        totalFocusTime                      
+        totalSessions
+        successRate
+
+      /> */}
+
     </div>
+
+
   );
 }
