@@ -86,7 +86,7 @@ export default function BattleScreen() {
     updateSessionStats(minutes);
     setTotalSessionTime(prev => prev + minutes);
     setTotalSessions(prev => prev + 1);
-    setIsCatching(true);
+    
 
     // Determine catch chance based on how much HP was drained
     const catchChance = Math.min(minutes * 2.2 + 7.8, 95) / 100;
@@ -101,6 +101,7 @@ export default function BattleScreen() {
         label: 'Reveal',
         onClick: () => {
           toast.dismiss(revealToastId);
+          setIsCatching(true);
           if (caught) {
             markCaught(currentPokemonId).then(() => {
               setCaughtPokemon(prev => prev.includes(currentPokemonId) ? prev : [...prev, currentPokemonId]);
