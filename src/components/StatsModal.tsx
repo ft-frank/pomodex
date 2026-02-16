@@ -83,7 +83,7 @@ export const StatsModal: React.FC<StatsModalProps> = ({
                    <div className="absolute inset-0 bg-[radial-gradient(#ddd_1px,transparent_1px)] [background-size:16px_16px]" />
                    <div className="relative z-10 flex flex-col items-center">
                      <img 
-                       src="public/pokemonTrainer.png" 
+                       src="/pokemonTrainer.png" 
                        alt="Trainer" 
                        className="w-48 h-48 image-pixelated"
                      />
