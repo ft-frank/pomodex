@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Settings, BookOpen, LogOut } from 'lucide-react';
+import { Settings, BookOpen, LogOut, User } from 'lucide-react';
 import { supabase } from '../supabase/supabase';
 import { PokemonSprite } from './PokemonSprite';
 import { BattleMenu } from './BattleMenu';
@@ -10,7 +10,7 @@ import { toast, Toaster } from 'sonner';
 import { clsx } from 'clsx';
 import { motion } from 'motion/react';
 import {pokemonMap} from '../constants/pokemonMap.tsx'
-import { loadCollection, markSeen, markCaught } from '../supabase/pokemonService'
+import { loadCollection, markSeen, markCaught, loadStats, updateSessionStats } from '../supabase/pokemonService'
 import { getRandomPokemon } from '../constants/pokemonRarity'
 
 // Pokemon names mapping for the message box
@@ -27,7 +27,10 @@ export default function BattleScreen() {
   });
   const [isActive, setIsActive] = useState(false);
   const [isCatching, setIsCatching] = useState(false);
-  const [currentPokemonId, setCurrentPokemonId] = useState(() => getRandomPokemon());
+  const [currentPokemonId, setCurrentPokemonId] = useState(() => {
+    const saved = localStorage.getItem('pomodex-current-pokemon');
+    return saved ? Number(saved) : getRandomPokemon();
+  });
   const [caughtPokemon, setCaughtPokemon] = useState<number[]>([]);
   const [seenPokemon, setSeenPokemon] = useState<number[]>([]);
   const [catchFailed, setCatchFailed] = useState(false);
@@ -38,6 +41,8 @@ export default function BattleScreen() {
   const [isPokedexOpen, setIsPokedexOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isStatsopen, setIsStatsOpen] = useState(false)
+  const [totalSessionTime, setTotalSessionTime] = useState(0);
+  const [totalSessions, setTotalSessions] = useState(0);
 
   // Load collection from Supabase on mount
   useEffect(() => {
@@ -46,6 +51,10 @@ export default function BattleScreen() {
       setSeenPokemon(seen);
       setCaughtCounts(counts);
     });
+    loadStats().then(({ total_session_time, total_sessions }) => {
+      setTotalSessionTime(total_session_time);
+      setTotalSessions(total_sessions);
+    });
   }, []);
 
 
@@ -53,6 +62,11 @@ export default function BattleScreen() {
   useEffect(() => {
   localStorage.setItem('pomodex-minutes', String(minutes));
 }, [minutes]);
+
+  // Persist current pokemon across reloads
+  useEffect(() => {
+    localStorage.setItem('pomodex-current-pokemon', String(currentPokemonId));
+  }, [currentPokemonId]);
 
   // Mark current pokemon as seen whenever it changes
   useEffect(() => {
@@ -69,6 +83,9 @@ export default function BattleScreen() {
 
   const handleFinish = useCallback(() => {
     setIsActive(false);
+    updateSessionStats(minutes);
+    setTotalSessionTime(prev => prev + minutes);
+    setTotalSessions(prev => prev + 1);
     setIsCatching(true);
 
     // Determine catch chance based on how much HP was drained
@@ -182,12 +199,14 @@ export default function BattleScreen() {
             <BookOpen size={20} className="sm:w-6 sm:h-6" />
             <span className="absolute left-full ml-2 px-2 py-1 bg-black/80 text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">POKÉDEX</span>
           </button>
-        </div>
-
-        <button 
+          <button
             onClick={() => setIsStatsOpen(true)}
-            className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl border border-white/20 text-white transition-all active:scale-95 group"
-          ></button>
+            className="p-2 sm:p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl border border-white/20 text-white transition-all active:scale-95 group"
+          >
+            <User size={20} className="sm:w-6 sm:h-6" />
+            <span className="absolute left-full ml-2 px-2 py-1 bg-black/80 text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">TRAINER</span>
+          </button>
+        </div>
 
         <div className="absolute top-3 right-3 sm:top-6 sm:right-6 z-30">
           <button
@@ -282,14 +301,14 @@ export default function BattleScreen() {
         caughtCounts={caughtCounts}
       />
 
-      {/* <StatsModal
-        isOpen = {isStatsOpen}
-        onClose = {() => setIsStatsOpen(false)}
-        totalFocusTime                      
-        totalSessions
-        successRate
-
-      /> */}
+      <StatsModal
+        isOpen={isStatsopen}
+        onClose={() => setIsStatsOpen(false)}
+        totalFocusTime={totalSessionTime}
+        totalCaught={caughtPokemon.length}
+        totalSessions={totalSessions}
+        caughtCounts={caughtCounts}
+      />
 
     </div>
 

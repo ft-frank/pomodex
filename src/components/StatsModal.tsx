@@ -8,15 +8,19 @@ interface StatsModalProps {
   totalFocusTime: number; // in minutes
   totalCaught: number;
   totalSessions: number;
+  caughtCounts: Record<number, number>;
 }
 
-export const StatsModal: React.FC<StatsModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  totalFocusTime, 
+export const StatsModal: React.FC<StatsModalProps> = ({
+  isOpen,
+  onClose,
+  totalFocusTime,
   totalCaught,
-  totalSessions 
+  totalSessions,
+  caughtCounts
 }) => {
+  const totalCatches = Object.values(caughtCounts).reduce((sum, n) => sum + n, 0);
+  const successRate = totalSessions > 0 ? Math.round(totalCatches / totalSessions * 100) : 0;
   const formatTotalTime = (mins: number) => {
     const hrs = Math.floor(mins / 60);
     const m = mins % 60;
@@ -33,14 +37,14 @@ export const StatsModal: React.FC<StatsModalProps> = ({
   };
 
   const badges = [
-    { name: '1st Session', earned: totalSessions >= 1 },
-    { name: '5 Sessions', earned: totalSessions >= 5 },
-    { name: '1hr Focus', earned: totalFocusTime >= 60 },
-    { name: '5hr Focus', earned: totalFocusTime >= 300 },
-    { name: '10hr Focus', earned: totalFocusTime >= 600 },
-    { name: '5 Caught', earned: totalCaught >= 5 },
-    { name: '10 Caught', earned: totalCaught >= 10 },
-    { name: 'Pokedex Master', earned: totalCaught >= 20 },
+    { name: '10 Sessions', earned: totalSessions >= 10 },
+    { name: '50 Sessions', earned: totalSessions >= 50 },
+    { name: '100 Sessions', earned: totalSessions >= 100 },
+    { name: '24hr Focus', earned: totalFocusTime >= 1440 },
+    { name: '100hr Focus', earned: totalFocusTime >= 6000 },
+    { name: '50 Caught', earned: totalCaught >= 50 },
+    { name: '150 Caught', earned: totalCaught >= 150 },
+    { name: 'Catch em All', earned: totalCaught >= 493 },
   ];
 
   return (
@@ -79,11 +83,11 @@ export const StatsModal: React.FC<StatsModalProps> = ({
                    <div className="absolute inset-0 bg-[radial-gradient(#ddd_1px,transparent_1px)] [background-size:16px_16px]" />
                    <div className="relative z-10 flex flex-col items-center">
                      <img 
-                       src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/trainers/1.png" 
+                       src="public/pokemonTrainer.png" 
                        alt="Trainer" 
                        className="w-48 h-48 image-pixelated"
                      />
-                     <span className="text-2xl font-bold text-[#303030] -mt-4">IDNo. 49182</span>
+                     <span className="text-2xl font-bold text-[#303030] -mt-4"> </span>
                    </div>
                 </div>
                 
@@ -115,6 +119,13 @@ export const StatsModal: React.FC<StatsModalProps> = ({
                       <Target size={18} /> Sessions
                     </span>
                     <span className="text-5xl font-bold text-[#303030]">{totalSessions}</span>
+                  </div>
+
+                  <div className="flex flex-col border-b-2 border-dashed border-gray-400 pb-2">
+                    <span className="text-xl text-gray-500 uppercase font-bold flex items-center gap-2">
+                      <Star size={18} /> Catch Rate
+                    </span>
+                    <span className="text-5xl font-bold text-[#303030]">{successRate}%</span>
                   </div>
                 </div>
 

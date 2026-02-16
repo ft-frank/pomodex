@@ -52,3 +52,29 @@ export async function markCaught(pokemonId: number): Promise<void> {
   const { error: rpcError } = await supabase.rpc('increment_caught', { p_user_id: userId, p_pokemon_id: pokemonId })
   if (rpcError) console.error('Failed to increment caught count', rpcError)
 }
+
+export async function loadStats(): Promise<{ total_session_time: number; total_sessions: number }> {
+  const userId = await getUserId()
+  if (!userId) return { total_session_time: 0, total_sessions: 0 }
+
+  const { data, error } = await supabase
+    .from('user_stats')
+    .select('total_session_time, total_sessions')
+    .eq('user_id', userId)
+    .single()
+
+  if (error) {
+    console.error('Failed to load stats', error)
+    return { total_session_time: 0, total_sessions: 0 }
+  }
+
+  return { total_session_time: data.total_session_time ?? 0, total_sessions: data.total_sessions ?? 0 }
+}
+
+export async function updateSessionStats(sessionMinutes: number): Promise<void> {
+  const userId = await getUserId()
+  if (!userId) return
+
+  const { error } = await supabase.rpc('update_session_stats', { p_user_id: userId, p_session_time: sessionMinutes })
+  if (error) console.error('Failed to update session stats', error)
+}
