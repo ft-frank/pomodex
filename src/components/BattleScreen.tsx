@@ -154,6 +154,17 @@ export default function BattleScreen() {
     return () => clearInterval(interval);
   }, [isActive, timeLeft, handleFinish]);
 
+  useEffect(() => {
+    if (isActive && timeLeft > 0) {
+      const m = Math.floor(timeLeft / 60);
+      const s = timeLeft % 60;
+      document.title = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')} - Pomodex`;
+    } else {
+      document.title = 'Pomodex';
+    }
+    return () => { document.title = 'Pomodex'; };
+  }, [isActive, timeLeft]);
+
   const drainPercent = Math.min(minutes * 2.2 + 7.8, 95);
   const hpPercentage = (100 - drainPercent) + (timeLeft / (minutes * 60)) * drainPercent;
 
