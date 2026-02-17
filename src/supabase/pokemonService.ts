@@ -53,22 +53,22 @@ export async function markCaught(pokemonId: number): Promise<void> {
   if (rpcError) console.error('Failed to increment caught count', rpcError)
 }
 
-export async function loadStats(): Promise<{ total_session_time: number; total_sessions: number }> {
+export async function loadStats(): Promise<{ total_session_time: number; total_sessions: number; total_attempts: number }> {
   const userId = await getUserId()
-  if (!userId) return { total_session_time: 0, total_sessions: 0 }
+  if (!userId) return { total_session_time: 0, total_sessions: 0, total_attempts: 0}
 
   const { data, error } = await supabase
     .from('user_stats')
-    .select('total_session_time, total_sessions')
+    .select('total_session_time, total_sessions, total_attempts')
     .eq('user_id', userId)
     .single()
 
   if (error) {
     console.error('Failed to load stats', error)
-    return { total_session_time: 0, total_sessions: 0 }
+    return { total_session_time: 0, total_sessions: 0, total_attempts: 0 }
   }
 
-  return { total_session_time: data.total_session_time ?? 0, total_sessions: data.total_sessions ?? 0 }
+  return { total_session_time: data.total_session_time ?? 0, total_sessions: data.total_sessions ?? 0, total_attempts: data.total_attempts ?? 0 }
 }
 
 export async function updateSessionStats(sessionMinutes: number): Promise<void> {

@@ -19,7 +19,7 @@ interface PokedexModalProps {
 // Gen 4 End is 493. We'll show a range.
 
 
-export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, caughtPokemon, seenPokemon, caughtCounts }) => {
+const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, caughtPokemon, seenPokemon, caughtCounts }) => {
   const [searchTerm, setSearchTerm] = useState(null) 
   const listRef = useRef<HTMLDivElement>(null);
   const filteredPokemonIndices = usePokemonFilter(searchTerm);
@@ -37,7 +37,7 @@ export const PokedexModal: React.FC<PokedexModalProps> = ({ isOpen, onClose, cau
     setFilterMode(prev => prev === 'all' ? 'seen' : prev === 'seen' ? 'obtained' : 'all');
   };
 
-  // Close on B or Escape key
+  // Close on Escape key
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -302,6 +302,8 @@ const BottomButton: React.FC<BottomButtonProps> = ({
     </form>
   );
 };
+
+export default PokedexModal;
 
 const ScrollButton: React.FC<{ onClick: () => void; direction: 'up' | 'down' }> = ({ onClick, direction }) => (
   <button 

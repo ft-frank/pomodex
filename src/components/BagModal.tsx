@@ -9,7 +9,7 @@ interface BagModalProps {
   onSetMinutes: (min: number) => void;
 }
 
-export const BagModal: React.FC<BagModalProps> = ({ isOpen, onClose, minutes, onSetMinutes }) => {
+const BagModal: React.FC<BagModalProps> = ({ isOpen, onClose, minutes, onSetMinutes }) => {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -72,3 +72,5 @@ export const BagModal: React.FC<BagModalProps> = ({ isOpen, onClose, minutes, on
     </AnimatePresence>
   );
 };
+
+export default BagModal;

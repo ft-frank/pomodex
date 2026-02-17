@@ -1,17 +1,18 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Settings, BookOpen, LogOut, User } from 'lucide-react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { Settings, BookOpen, LogOut, User, Target } from 'lucide-react';
 import { supabase } from '../supabase/supabase';
 import { PokemonSprite } from './PokemonSprite';
 import { BattleMenu } from './BattleMenu';
-import { BagModal } from './BagModal';
-import {PokedexModal} from './PokedexModal.tsx'
-import {StatsModal} from './StatsModal.tsx'
+
+const BagModal = lazy(() => import('./BagModal'));
+const PokedexModal = lazy(() => import('./PokedexModal'));
+const StatsModal = lazy(() => import('./StatsModal'));
 import { toast, Toaster } from 'sonner';
 import { clsx } from 'clsx';
 import { motion } from 'motion/react';
 import {pokemonMap} from '../constants/pokemonMap.tsx'
 import { loadCollection, markSeen, markCaught, loadStats, updateSessionStats } from '../supabase/pokemonService'
-import { getRandomPokemon } from '../constants/pokemonRarity'
+import { getRandomPokemon, getRarity } from '../constants/pokemonRarity'
 
 // Pokemon names mapping for the message box
 const POKEMON_NAMES: Record<number, string> = pokemonMap
@@ -43,6 +44,7 @@ export default function BattleScreen() {
   const [isStatsopen, setIsStatsOpen] = useState(false)
   const [totalSessionTime, setTotalSessionTime] = useState(0);
   const [totalSessions, setTotalSessions] = useState(0);
+  const [totalAttempts, setTotalAttempts] = useState(0)
 
   // Load collection from Supabase on mount
   useEffect(() => {
@@ -51,9 +53,10 @@ export default function BattleScreen() {
       setSeenPokemon(seen);
       setCaughtCounts(counts);
     });
-    loadStats().then(({ total_session_time, total_sessions }) => {
+    loadStats().then(({ total_session_time, total_sessions, total_attempts }) => {
       setTotalSessionTime(total_session_time);
       setTotalSessions(total_sessions);
+      setTotalAttempts(total_attempts)
     });
   }, []);
 
@@ -84,8 +87,10 @@ export default function BattleScreen() {
   const handleFinish = useCallback(() => {
     setIsActive(false);
     updateSessionStats(minutes);
+    
     setTotalSessionTime(prev => prev + minutes);
     setTotalSessions(prev => prev + 1);
+    setTotalAttempts(prev => prev + 1);
     
 
     // Determine catch chance based on how much HP was drained
@@ -101,6 +106,8 @@ export default function BattleScreen() {
         label: 'Reveal',
         onClick: () => {
           toast.dismiss(revealToastId);
+          const prev = Number(sessionStorage.getItem('pomodex-session-focus') ?? 0);
+          sessionStorage.setItem('pomodex-session-focus', String(prev + minutes));
           setIsCatching(true);
           if (caught) {
             markCaught(currentPokemonId).then(() => {
@@ -183,6 +190,18 @@ export default function BattleScreen() {
   };
 
   const pokemonName = POKEMON_NAMES[currentPokemonId] || "Wild Pokemon";
+  const rarity = getRarity(currentPokemonId);
+  const catchChance = Math.min(minutes * 2.2 + 7.8, 95);
+  const [showStats, setShowStats] = useState(false);
+  const [showRarityInfo, setShowRarityInfo] = useState(false);
+
+  const rarityColors: Record<string, string> = {
+    common: 'text-gray-400',
+    uncommon: 'text-green-400',
+    rare: 'text-blue-400',
+    legendary: 'text-yellow-400',
+    mythical: 'text-purple-400',
+  };
 
   return (
     <div className="h-screen w-screen bg-[#303030] flex items-center justify-center p-0 font-mono overflow-hidden">
@@ -192,21 +211,92 @@ export default function BattleScreen() {
       <div className="relative w-full h-full max-w-full border-0 md:border-[12px] md:border-[#444444] md:rounded-[2rem] shadow-2xl overflow-hidden flex flex-col">
         
         {/* Top Header Icons */}
-        <div className="absolute top-3 left-3 sm:top-6 sm:left-6 z-30 flex gap-2">
+        <div className="absolute top-3 left-3 sm:top-6 sm:left-6 z-30 grid grid-cols-2 gap-2">
           <button
             onClick={() => setIsPokedexOpen(true)}
-            className="p-2 sm:p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl border border-white/20 text-white transition-all active:scale-95 group"
+            className="relative p-2 sm:p-3 bg-white/10 hover:bg-white/20 hover:z-10 backdrop-blur-md rounded-xl border border-white/20 text-white transition-all active:scale-95 group"
           >
             <BookOpen size={20} className="sm:w-6 sm:h-6" />
             <span className="absolute left-full ml-2 px-2 py-1 bg-black/80 text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">POKÉDEX</span>
           </button>
           <button
             onClick={() => setIsStatsOpen(true)}
-            className="p-2 sm:p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl border border-white/20 text-white transition-all active:scale-95 group"
+            className="relative p-2 sm:p-3 bg-white/10 hover:bg-white/20 hover:z-10 backdrop-blur-md rounded-xl border border-white/20 text-white transition-all active:scale-95 group"
           >
             <User size={20} className="sm:w-6 sm:h-6" />
             <span className="absolute left-full ml-2 px-2 py-1 bg-black/80 text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">TRAINER</span>
           </button>
+          <button
+            onClick={() => setShowStats(prev => !prev)}
+            className="relative p-2 sm:p-3 bg-white/10 hover:bg-white/20 hover:z-10 backdrop-blur-md rounded-xl border border-white/20 text-white transition-all active:scale-95 group"
+          >
+            <Target size={20} className="sm:w-6 sm:h-6" />
+            <span className="absolute left-full ml-2 px-2 py-1 bg-black/80 text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">STATS</span>
+          </button>
+
+          {/* Battle Stats Popup */}
+          {showStats && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="col-span-2 bg-black/80 backdrop-blur-md border border-white/20 rounded-lg sm:rounded-xl p-1.5 sm:p-4 font-['VT323'] text-white w-[28vw] sm:w-56 md:w-64 shadow-2xl"
+            >
+              <div className="text-[10px] sm:text-xl font-bold border-b border-white/20 pb-0.5 sm:pb-2 mb-0.5 sm:mb-2 uppercase tracking-wider">Battle Stats</div>
+              <div className="space-y-0.5 sm:space-y-1.5 text-[9px] sm:text-base">
+                <div className="flex justify-between">
+                  <span className="text-white/60">Rarity</span>
+                  <span className={`uppercase font-bold ${rarityColors[rarity]}`}>{rarity}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/60">Catch</span>
+                  <span className="font-bold">{catchChance.toFixed(1)}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/60">HP Drain</span>
+                  <span className="font-bold">{drainPercent.toFixed(1)}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/60">Timer</span>
+                  <span className="font-bold">{minutes} min</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/60">Rerolls</span>
+                  <span className="font-bold">{5 - (localStorage.getItem('rerollDate') === new Date().toDateString() ? Number(localStorage.getItem('rerollCount') || 0) : 0)} left</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowRarityInfo(prev => !prev)}
+                className="mt-1 sm:mt-3 pt-0.5 sm:pt-2 border-t border-white/20 w-full text-left text-[8px] sm:text-xs text-white/50 hover:text-white/80 transition-colors uppercase tracking-wider"
+              >
+                {showRarityInfo ? '▲ Hide' : '▼ View'} Odds
+              </button>
+
+              {showRarityInfo && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="mt-1 sm:mt-3 bg-white rounded p-1.5 sm:p-3 text-[#303030]"
+                >
+                  <div className="text-[9px] sm:text-base font-bold border-b border-gray-200 pb-0.5 sm:pb-2 mb-0.5 sm:mb-2 uppercase tracking-wider">Rarity Odds</div>
+                  <div className="space-y-0.5 sm:space-y-1.5 text-[8px] sm:text-sm">
+                    {[
+                      { tier: 'Common', weight: 60, color: 'bg-gray-400' },
+                      { tier: 'Uncommon', weight: 25, color: 'bg-green-500' },
+                      { tier: 'Rare', weight: 10, color: 'bg-blue-500' },
+                      { tier: 'Legendary', weight: 4, color: 'bg-yellow-500' },
+                      { tier: 'Mythical', weight: 1, color: 'bg-purple-500' },
+                    ].map(({ tier, weight, color }) => (
+                      <div key={tier} className="flex items-center gap-1 sm:gap-2">
+                        <div className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${color} shrink-0`} />
+                        <span className="flex-1 uppercase">{tier}</span>
+                        <span className="font-bold">{weight}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </motion.div>
+          )}
         </div>
 
         <div className="absolute top-3 right-3 sm:top-6 sm:right-6 z-30">
@@ -250,7 +340,7 @@ export default function BattleScreen() {
             >
               <div className="flex justify-between items-center border-b-2 border-gray-300 pb-1 mb-2">
                 <span className="text-2xl uppercase tracking-tighter font-bold">{pokemonName}</span>
-                <span className="text-xl">Lv 25</span>
+                <span className="text-xl">Lv {caughtCounts[currentPokemonId] ? caughtCounts[currentPokemonId] + 1 : 1}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-bold text-gray-400 italic">HP</span>
@@ -285,31 +375,32 @@ export default function BattleScreen() {
       </div>
 
       {/* Modals */}
-                          
+      <Suspense fallback={null}>
+        <BagModal
+          isOpen={isBagOpen}
+          onClose={() => setIsBagOpen(false)}
+          minutes={minutes}
+          onSetMinutes={setMinutes}
+        />
 
-      <BagModal 
-        isOpen={isBagOpen} 
-        onClose={() => setIsBagOpen(false)}
-        minutes={minutes}
-        onSetMinutes={setMinutes}
-      />
+        <PokedexModal
+          isOpen={isPokedexOpen}
+          onClose={() => setIsPokedexOpen(false)}
+          caughtPokemon={caughtPokemon}
+          seenPokemon={seenPokemon}
+          caughtCounts={caughtCounts}
+        />
 
-      <PokedexModal
-        isOpen={isPokedexOpen}
-        onClose={() => setIsPokedexOpen(false)}
-        caughtPokemon={caughtPokemon}
-        seenPokemon={seenPokemon}
-        caughtCounts={caughtCounts}
-      />
-
-      <StatsModal
-        isOpen={isStatsopen}
-        onClose={() => setIsStatsOpen(false)}
-        totalFocusTime={totalSessionTime}
-        totalCaught={caughtPokemon.length}
-        totalSessions={totalSessions}
-        caughtCounts={caughtCounts}
-      />
+        <StatsModal
+          isOpen={isStatsopen}
+          onClose={() => setIsStatsOpen(false)}
+          totalFocusTime={totalSessionTime}
+          totalCaught={caughtPokemon.length}
+          totalSessions={totalSessions}
+          totalAttempts = {totalAttempts}
+          caughtCounts={caughtCounts}
+        />
+      </Suspense>
 
     </div>
 

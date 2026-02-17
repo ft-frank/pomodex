@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import BattleScreen from "./components/BattleScreen.tsx";
-import PrivacyPolicy from "./components/PrivacyPolicy.tsx";
 import LoginScreen from "./components/LoginScreen.tsx";
+
+const PrivacyPolicy = lazy(() => import("./components/PrivacyPolicy.tsx"));
 import './styles/index.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './styles/fonts.css';
@@ -31,7 +32,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={session ? <BattleScreen /> : <LoginScreen />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/privacy" element={<Suspense fallback={null}><PrivacyPolicy /></Suspense>} />
       </Routes>
     </BrowserRouter>
   );
