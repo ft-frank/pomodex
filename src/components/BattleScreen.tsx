@@ -3,6 +3,7 @@ import { Settings, BookOpen, LogOut, User, Target } from 'lucide-react';
 import { supabase } from '../supabase/supabase';
 import { PokemonSprite } from './PokemonSprite';
 import { BattleMenu } from './BattleMenu';
+import BattleStats from './BattleStats.tsx'
 
 const BagModal = lazy(() => import('./BagModal'));
 const PokedexModal = lazy(() => import('./PokedexModal'));
@@ -195,14 +196,7 @@ export default function BattleScreen() {
   const [showStats, setShowStats] = useState(false);
   const [showRarityInfo, setShowRarityInfo] = useState(false);
 
-  const rarityColors: Record<string, string> = {
-    common: 'text-gray-400',
-    uncommon: 'text-green-400',
-    rare: 'text-blue-400',
-    legendary: 'text-yellow-400',
-    mythical: 'text-purple-400',
-  };
-
+  
   return (
     <div className="h-screen w-screen bg-[#303030] flex items-center justify-center p-0 font-mono overflow-hidden">
       <Toaster position="top-center" richColors />
@@ -235,68 +229,7 @@ export default function BattleScreen() {
           </button>
 
           {/* Battle Stats Popup */}
-          {showStats && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="col-span-2 bg-black/80 backdrop-blur-md border border-white/20 rounded-lg sm:rounded-xl p-1.5 sm:p-4 font-['VT323'] text-white w-[28vw] sm:w-56 md:w-64 shadow-2xl"
-            >
-              <div className="text-[10px] sm:text-xl font-bold border-b border-white/20 pb-0.5 sm:pb-2 mb-0.5 sm:mb-2 uppercase tracking-wider">Battle Stats</div>
-              <div className="space-y-0.5 sm:space-y-1.5 text-[9px] sm:text-base">
-                <div className="flex justify-between">
-                  <span className="text-white/60">Rarity</span>
-                  <span className={`uppercase font-bold ${rarityColors[rarity]}`}>{rarity}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-white/60">Catch</span>
-                  <span className="font-bold">{catchChance.toFixed(1)}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-white/60">HP Drain</span>
-                  <span className="font-bold">{drainPercent.toFixed(1)}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-white/60">Timer</span>
-                  <span className="font-bold">{minutes} min</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-white/60">Rerolls</span>
-                  <span className="font-bold">{5 - (localStorage.getItem('rerollDate') === new Date().toDateString() ? Number(localStorage.getItem('rerollCount') || 0) : 0)} left</span>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowRarityInfo(prev => !prev)}
-                className="mt-1 sm:mt-3 pt-0.5 sm:pt-2 border-t border-white/20 w-full text-left text-[8px] sm:text-xs text-white/50 hover:text-white/80 transition-colors uppercase tracking-wider"
-              >
-                {showRarityInfo ? '▲ Hide' : '▼ View'} Odds
-              </button>
-
-              {showRarityInfo && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  className="mt-1 sm:mt-3 bg-white rounded p-1.5 sm:p-3 text-[#303030]"
-                >
-                  <div className="text-[9px] sm:text-base font-bold border-b border-gray-200 pb-0.5 sm:pb-2 mb-0.5 sm:mb-2 uppercase tracking-wider">Rarity Odds</div>
-                  <div className="space-y-0.5 sm:space-y-1.5 text-[8px] sm:text-sm">
-                    {[
-                      { tier: 'Common', weight: 60, color: 'bg-gray-400' },
-                      { tier: 'Uncommon', weight: 25, color: 'bg-green-500' },
-                      { tier: 'Rare', weight: 10, color: 'bg-blue-500' },
-                      { tier: 'Legendary', weight: 4, color: 'bg-yellow-500' },
-                      { tier: 'Mythical', weight: 1, color: 'bg-purple-500' },
-                    ].map(({ tier, weight, color }) => (
-                      <div key={tier} className="flex items-center gap-1 sm:gap-2">
-                        <div className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${color} shrink-0`} />
-                        <span className="flex-1 uppercase">{tier}</span>
-                        <span className="font-bold">{weight}%</span>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </motion.div>
-          )}
+          {showStats && <BattleStats rarity = {rarity} catchChance = {catchChance} drainPercent = {drainPercent} minutes = {minutes} />}
         </div>
 
         <div className="absolute top-3 right-3 sm:top-6 sm:right-6 z-30">
