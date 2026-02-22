@@ -85,7 +85,8 @@ export default function BattleScreen() {
     if (!isActive) {
       setTimeLeft(minutes * 60);
     }
-  }, [minutes, isActive]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [minutes]);
 
   const handleFinish = useCallback(() => {
     setIsActive(false);

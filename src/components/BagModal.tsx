@@ -52,7 +52,7 @@ const BagModal: React.FC<BagModalProps> = ({ isOpen, onClose, minutes, onSetMinu
                   <span className="text-lg font-bold text-gray-400 uppercase">MINUTES</span>
                 </div>
                 <button 
-                  onClick={() => onSetMinutes(Math.min(120, minutes + 5))}
+                  onClick={() => onSetMinutes(Math.min(60, minutes + 5))}
                   className="w-12 h-12 bg-white border-2 border-[#303030] rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
                 >
                   <Plus size={20} />
