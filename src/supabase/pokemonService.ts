@@ -78,3 +78,11 @@ export async function updateSessionStats(sessionMinutes: number): Promise<void> 
   const { error } = await supabase.rpc('update_session_stats', { p_user_id: userId, p_session_time: sessionMinutes })
   if (error) console.error('Failed to update session stats', error)
 }
+
+export async function incrementTotalSessions(): Promise<void> {
+  const userId = await getUserId()
+  if (!userId) return
+
+  const { error } = await supabase.rpc('increment_total_sessions', { p_user_id: userId })
+  if (error) console.error('Failed to increment total sessions', error)
+}

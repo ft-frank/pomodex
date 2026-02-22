@@ -12,7 +12,7 @@ import { toast, Toaster } from 'sonner';
 import { clsx } from 'clsx';
 import { motion } from 'motion/react';
 import {pokemonMap} from '../constants/pokemonMap.tsx'
-import { loadCollection, markSeen, markCaught, loadStats, updateSessionStats } from '../supabase/pokemonService'
+import { loadCollection, markSeen, markCaught, loadStats, updateSessionStats, incrementTotalSessions } from '../supabase/pokemonService'
 import { getRandomPokemon, getRarity } from '../constants/pokemonRarity'
 
 // Pokemon names mapping for the message box
@@ -91,7 +91,8 @@ export default function BattleScreen() {
   const handleFinish = useCallback(() => {
     setIsActive(false);
     updateSessionStats(minutes);
-    
+    incrementTotalSessions();
+
     setTotalSessionTime(prev => prev + minutes);
     setTotalSessions(prev => prev + 1);
     setTotalAttempts(prev => prev + 1);
