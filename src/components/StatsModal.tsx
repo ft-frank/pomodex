@@ -18,11 +18,10 @@ const StatsModal: React.FC<StatsModalProps> = ({
   totalFocusTime,
   totalCaught,
   totalSessions,
-  totalAttempts,
   caughtCounts
 }) => {
   const totalCatches = Object.values(caughtCounts).reduce((sum, n) => sum + n, 0);
-  const successRate = totalSessions > 0 ? Math.round(totalCatches / totalAttempts * 100) : 0;
+  const successRate = totalSessions > 0 ? Math.round(totalCatches / totalSessions * 100) : 0;
   const sessionFocusTime = Number(sessionStorage.getItem('pomodex-session-focus') ?? 0);
   const formatTotalTime = (mins: number) => {
     const hrs = Math.floor(mins / 60);
