@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { Settings, BookOpen, LogOut, User, Target } from 'lucide-react';
 import { supabase } from '../supabase/supabase';
 import { PokemonSprite } from './PokemonSprite';
@@ -28,6 +28,8 @@ export default function BattleScreen() {
     return (saved ? Number(saved) : 25) * 60;
   });
   const [isActive, setIsActive] = useState(false);
+  const endTimeRef = useRef<number>(0);
+  const remainingOnPauseRef = useRef<number>(0);
   const [isCatching, setIsCatching] = useState(false);
   const [currentPokemonId, setCurrentPokemonId] = useState(() => {
     const saved = localStorage.getItem('pomodex-current-pokemon');
@@ -143,16 +145,22 @@ export default function BattleScreen() {
   }, [currentPokemonId, minutes]);
 
   useEffect(() => {
-    let interval: number | undefined;
-    if (isActive && timeLeft > 0) {
-      interval = window.setInterval(() => {
-        setTimeLeft((time) => time - 1);
-      }, 1000);
-    } else if (timeLeft === 0 && isActive) {
+    if (!isActive) return;
+    if (timeLeft <= 0) {
       handleFinish();
+      return;
     }
+    const tick = () => {
+      const remaining = Math.round((endTimeRef.current - Date.now()) / 1000);
+      if (remaining <= 0) {
+        setTimeLeft(0);
+      } else {
+        setTimeLeft(remaining);
+      }
+    };
+    const interval = window.setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [isActive, timeLeft, handleFinish]);
+  }, [isActive, timeLeft <= 0, handleFinish]);
 
   useEffect(() => {
     if (isActive && timeLeft > 0) {
@@ -308,7 +316,14 @@ export default function BattleScreen() {
             <BattleMenu 
               timerDisplay={formatTime(timeLeft)}
               isActive={isActive}
-              onToggle={() => setIsActive(!isActive)}
+              onToggle={() => {
+                if (!isActive) {
+                  endTimeRef.current = Date.now() + timeLeft * 1000;
+                } else {
+                  remainingOnPauseRef.current = timeLeft;
+                }
+                setIsActive(!isActive);
+              }}
               onReset={handleReset}
               onOpenBag={() => setIsBagOpen(true)}
               onOpenPokemon={handleRandomizePokemon}
